@@ -1,4 +1,4 @@
-import { ArticleBlockInterface } from '../types';
+import { ArticleBlockInterface } from '../types/types';
 
 export interface CreateArticleDto {
   title: string;

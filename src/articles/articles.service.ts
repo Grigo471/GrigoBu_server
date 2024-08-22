@@ -1,8 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
-import { Article, ArticleBlock, ArticleTag, Tag } from './articles.model';
 import { CreateArticleDto } from './dto/createArticleDto';
 import { FileService } from 'src/file/file.service';
+import { Article } from './models/articles.model';
+import { ArticleTag, Tag } from './models/articleTags.model';
+import { ArticleBlock } from './models/articleBlocks.model';
 
 @Injectable()
 export class ArticlesService {

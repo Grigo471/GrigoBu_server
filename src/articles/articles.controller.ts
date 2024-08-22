@@ -7,11 +7,11 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { ArticlesService } from './articles.service';
-import { Article } from './articles.model';
+import { Article } from './models/articles.model';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { CreateArticleDto } from './dto/createArticleDto';
 
-@Controller('articles')
+@Controller('/articles')
 export class ArticlesController {
   constructor(private readonly articlesService: ArticlesService) {}
 
