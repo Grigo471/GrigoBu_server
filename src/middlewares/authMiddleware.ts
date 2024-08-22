@@ -16,35 +16,25 @@ export class AuthMiddleware implements NestMiddleware {
   constructor(private readonly tokenService: TokenService) {}
 
   use(req: AuthRequest, res: Response, next: NextFunction) {
-    try {
-      const authorizationHeader = req.headers.authorization;
-      if (!authorizationHeader) {
-        throw new HttpException(
-          'Missing authorization header',
-          HttpStatus.UNAUTHORIZED,
-        );
-      }
-
-      const accessToken = authorizationHeader.split(' ')[1];
-      if (!accessToken) {
-        throw new HttpException(
-          'Missing access token',
-          HttpStatus.UNAUTHORIZED,
-        );
-      }
-
-      const userData = this.tokenService.validateAccessToken(accessToken);
-      if (!userData) {
-        throw new HttpException('Invalid token', HttpStatus.UNAUTHORIZED);
-      }
-
-      req.userId = userData.id;
-      next();
-    } catch (e) {
+    const authorizationHeader = req.headers.authorization;
+    if (!authorizationHeader) {
       throw new HttpException(
-        'Unforseen authorization error',
+        'Missing authorization header',
         HttpStatus.UNAUTHORIZED,
       );
     }
+
+    const accessToken = authorizationHeader.split(' ')[1];
+    if (!accessToken) {
+      throw new HttpException('Missing access token', HttpStatus.UNAUTHORIZED);
+    }
+
+    const userData = this.tokenService.validateAccessToken(accessToken);
+    if (!userData) {
+      throw new HttpException('Invalid token', HttpStatus.UNAUTHORIZED);
+    }
+
+    req.userId = userData.id;
+    next();
   }
 }

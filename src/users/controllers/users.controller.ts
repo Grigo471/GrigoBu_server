@@ -5,6 +5,7 @@ import {
   Param,
   Patch,
   Post,
+  Req,
   UploadedFile,
   UseInterceptors,
 } from '@nestjs/common';
@@ -12,15 +13,16 @@ import { UsersService } from '../services/users.service';
 import { User } from '../models/users.model';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { UserDto } from '../dto/UserDto';
+import { AuthRequest } from 'src/middlewares/authMiddleware';
 
 @Controller('/users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
-  @Patch(':id/avatar')
+  @Patch('/avatar')
   @UseInterceptors(FileInterceptor('avatar'))
-  updateAvatar(@Param('id') id: number, @UploadedFile() avatar): Promise<User> {
-    return this.usersService.updateAvatar(id, avatar);
+  updateAvatar(@Req() req: AuthRequest, @UploadedFile() avatar): Promise<User> {
+    return this.usersService.updateAvatar(req.userId, avatar);
   }
 
   @Patch('/status')
@@ -28,12 +30,9 @@ export class UsersController {
     return this.usersService.updateStatus(dto);
   }
 
-  /**
-   TODO: AuthMiddleware
-   */
   @Post(':id/subscribe')
-  subscribe(@Param('id') id: number, @Body() dto: UserDto): Promise<User[]> {
-    return this.usersService.subscribe(id, dto.id);
+  subscribe(@Param('id') id: number, @Req() req: AuthRequest): Promise<User[]> {
+    return this.usersService.subscribe(id, req.userId);
   }
 
   @Get()

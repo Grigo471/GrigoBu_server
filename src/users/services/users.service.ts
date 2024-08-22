@@ -47,7 +47,7 @@ export class UsersService {
     return user;
   }
 
-  async subscribe(subscriberId: number, subscriptionId: number) {
+  async subscribe(subscriptionId: number, subscriberId: number) {
     await this.userSubscriberModel.create({ subscriberId, subscriptionId });
 
     const subscribers = await this.userModel.findAll({
