@@ -1,10 +1,10 @@
-import { ArticleBlockInterface } from '../types/types';
+import { ArticleBlock } from '../types/types';
 
 export interface CreateArticleDto {
   title: string;
   subtitle: string;
-  img: string;
   tags: string[];
-  blocks: ArticleBlockInterface[];
+  blocks: ArticleBlock[];
   userId: number;
+  imagesBlocksIds: string[];
 }

@@ -8,7 +8,7 @@ import { NextFunction, Request, Response } from 'express';
 import { TokenService } from 'src/users/services/token.service';
 
 export interface AuthRequest extends Request {
-  userId: number;
+  userId?: number;
 }
 
 @Injectable()

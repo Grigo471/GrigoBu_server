@@ -46,13 +46,17 @@ export class AuthService {
   }
 
   async login(username: string, password: string) {
-    const user = await this.userModel.findOne({ where: { username } });
+    const user = await this.userModel.findOne({
+      where: { username },
+      include: [UserSettings],
+    });
     if (!user) {
       throw new HttpException(
         `User ${username} not found`,
         HttpStatus.BAD_REQUEST,
       );
     }
+
     const isPasswordEquals = await bcrypt.compare(password, user.password);
     if (!isPasswordEquals) {
       throw new HttpException(`Wrong password`, HttpStatus.BAD_REQUEST);
@@ -82,7 +86,7 @@ export class AuthService {
       throw new HttpException('Invalid token', HttpStatus.UNAUTHORIZED);
     }
 
-    const user = await this.userModel.findOne({
+    const user = await this.userModel.scope('withoutPassword').findOne({
       where: { username: userData.username },
     });
 
@@ -100,8 +104,8 @@ export class AuthService {
     await this.tokenService.saveToken(user.id, tokens.refreshToken);
 
     return {
-      ...tokens,
       user,
+      ...tokens,
     };
   }
 }

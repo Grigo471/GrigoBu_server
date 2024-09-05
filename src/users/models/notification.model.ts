@@ -6,18 +6,20 @@ import {
   Table,
 } from 'sequelize-typescript';
 import { User } from './users.model';
-import { NotificationType } from '../types/types';
 
 @Table
 export class Notification extends Model {
   @Column
-  type: NotificationType;
+  type: string;
 
   @Column
   value: number;
 
   @Column
   name: string;
+
+  @Column
+  isSeen: boolean = false;
 
   @ForeignKey(() => User)
   @Column

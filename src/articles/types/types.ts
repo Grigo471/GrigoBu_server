@@ -1,7 +1,29 @@
-export type ArticleBlockType = 'CODE' | 'IMAGE' | 'TEXT';
+export type ArticleBlockType = 'code' | 'image' | 'text';
 
-export interface ArticleBlockInterface {
+interface ArticleBlockBase {
+  id: string;
   type: ArticleBlockType;
-  title?: string;
-  value: string;
 }
+
+interface ArticleCodeBlockInterface extends ArticleBlockBase {
+  type: 'code';
+  code: string;
+  title?: string;
+}
+
+interface ArticleImageBlockInterface extends ArticleBlockBase {
+  type: 'image';
+  src: string;
+  title?: string;
+}
+
+interface ArticleTextBlockInterface extends ArticleBlockBase {
+  type: 'text';
+  title?: string;
+  paragraphs: string;
+}
+
+export type ArticleBlock =
+  | ArticleTextBlockInterface
+  | ArticleCodeBlockInterface
+  | ArticleImageBlockInterface;

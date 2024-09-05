@@ -5,19 +5,65 @@ import {
   Model,
   Table,
 } from 'sequelize-typescript';
-import { ArticleBlockType } from '../types/types';
 import { Article } from './articles.model';
 
 @Table
-export class ArticleBlock extends Model {
+export class ArticleTextBlock extends Model {
   @Column
-  type: ArticleBlockType;
+  type: string;
 
   @Column
   title: string;
 
   @Column
-  value: string;
+  index: number;
+
+  @Column
+  paragraphs: string;
+
+  @ForeignKey(() => Article)
+  @Column
+  articleId: number;
+
+  @BelongsTo(() => Article)
+  article: Article;
+}
+
+@Table
+export class ArticleImageBlock extends Model {
+  @Column
+  type: string;
+
+  @Column
+  title: string;
+
+  @Column
+  index: number;
+
+  @Column
+  src: string;
+
+  @ForeignKey(() => Article)
+  @Column
+  articleId: number;
+
+  @BelongsTo(() => Article)
+  article: Article;
+}
+
+@Table
+export class ArticleCodeBlock extends Model {
+  @Column
+  type: string;
+
+  @Column
+  title: string;
+
+  @Column
+  index: number;
+
+  @Column
+  code: string;
 
   @ForeignKey(() => Article)
   @Column

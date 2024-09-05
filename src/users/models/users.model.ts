@@ -6,13 +6,16 @@ import {
   HasOne,
   BelongsToMany,
   ForeignKey,
+  Scopes,
 } from 'sequelize-typescript';
 import { Token } from './token.model';
 import { CommentModel } from 'src/comments';
 import { Article } from 'src/articles';
-import { UserRole } from '../types/types';
 import { UserSettings } from './userSettings';
 
+@Scopes(() => ({
+  withoutPassword: { attributes: { exclude: ['password'] } },
+}))
 @Table
 export class User extends Model {
   @Column
@@ -31,7 +34,7 @@ export class User extends Model {
   rating: number = 0;
 
   @Column
-  role: UserRole = 'user';
+  role: string = 'user';
 
   @HasOne(() => Token)
   refreshToken: Token;

@@ -6,15 +6,14 @@ import {
   Table,
 } from 'sequelize-typescript';
 import { User } from './users.model';
-import { Language, Theme } from '../types/types';
 
 @Table
 export class UserSettings extends Model {
   @Column
-  theme: Theme = 'light';
+  theme: string = 'light';
 
   @Column
-  language: Language = 'russian';
+  language: string = 'russian';
 
   @Column
   isFirstVisit: boolean = true;

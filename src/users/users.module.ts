@@ -15,10 +15,18 @@ import { Token } from './models/token.model';
 import { FileService } from 'src/file';
 import { UserSettings } from './models/userSettings';
 import { AuthMiddleware } from 'src/middlewares/authMiddleware';
+import { Notification } from './models/notification.model';
+import { OptionalAuthMiddleware } from 'src/middlewares/optionalAuthMiddleware';
 
 @Module({
   imports: [
-    SequelizeModule.forFeature([User, UserSubscriber, Token, UserSettings]),
+    SequelizeModule.forFeature([
+      User,
+      UserSubscriber,
+      Token,
+      UserSettings,
+      Notification,
+    ]),
   ],
   controllers: [UsersController, AuthController],
   providers: [UsersService, AuthService, TokenService, FileService],
@@ -27,7 +35,13 @@ export class UsersModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
     consumer
       .apply(AuthMiddleware)
-      .exclude({ path: 'users', method: RequestMethod.GET })
+      .exclude(
+        { path: 'users', method: RequestMethod.GET },
+        { path: 'users/:username', method: RequestMethod.GET },
+      )
       .forRoutes(UsersController);
+    consumer
+      .apply(OptionalAuthMiddleware)
+      .forRoutes({ path: 'users/:username', method: RequestMethod.GET });
   }
 }

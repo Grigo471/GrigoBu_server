@@ -10,7 +10,11 @@ import {
 import { User } from 'src/users/models/users.model';
 import { CommentModel } from 'src/comments';
 import { ArticleTag, Tag } from './articleTags.model';
-import { ArticleBlock } from './articleBlocks.model';
+import {
+  ArticleTextBlock,
+  ArticleImageBlock,
+  ArticleCodeBlock,
+} from './articleBlocks.model';
 
 @Table
 export class Article extends Model {
@@ -21,9 +25,6 @@ export class Article extends Model {
   subtitle: string;
 
   @Column
-  img: string;
-
-  @Column
   views: number;
 
   @Column
@@ -32,8 +33,14 @@ export class Article extends Model {
   @BelongsToMany(() => Tag, () => ArticleTag)
   tags: Tag[];
 
-  @HasMany(() => ArticleBlock)
-  blocks: ArticleBlock[];
+  @HasMany(() => ArticleTextBlock)
+  textBlocks: ArticleTextBlock[];
+
+  @HasMany(() => ArticleImageBlock)
+  imageBlocks: ArticleImageBlock[];
+
+  @HasMany(() => ArticleCodeBlock)
+  codeBlocks: ArticleCodeBlock[];
 
   @HasMany(() => CommentModel)
   comments: CommentModel[];

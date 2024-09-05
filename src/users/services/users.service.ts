@@ -3,14 +3,18 @@ import { User, UserSubscriber } from '../models/users.model';
 import { InjectModel } from '@nestjs/sequelize';
 import { UserDto } from '../dto/UserDto';
 import { FileService } from 'src/file';
+import { Notification } from '../models/notification.model';
+import { getUserInterface } from '../types/types';
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectModel(User)
     private userModel: typeof User,
-    @InjectModel(User)
+    @InjectModel(UserSubscriber)
     private userSubscriberModel: typeof UserSubscriber,
+    @InjectModel(Notification)
+    private notificationModel: typeof Notification,
     private fileService: FileService,
   ) {}
 
@@ -21,15 +25,18 @@ export class UsersService {
     const user = await this.userModel.findOne({ where: { id } });
 
     if (!user) {
-      throw new HttpException(`User not found`, HttpStatus.BAD_REQUEST);
+      throw new HttpException(
+        { error: `User not found`, status: HttpStatus.BAD_REQUEST },
+        HttpStatus.BAD_REQUEST,
+      );
     }
 
-    const avatar = await this.fileService.createFile(file);
+    const avatar = this.fileService.createFile(file);
 
     user.avatar = avatar;
-    user.save();
+    await user.save();
 
-    return user;
+    return user.avatar;
   }
 
   async updateStatus(dto: UserDto) {
@@ -49,27 +56,64 @@ export class UsersService {
 
   async subscribe(subscriptionId: number, subscriberId: number) {
     await this.userSubscriberModel.create({ subscriberId, subscriptionId });
+    // const subscribers = await this.userModel.findAll({
+    //   where: { subscriptionId },
+    // });
 
-    const subscribers = await this.userModel.findAll({
-      where: { subscriberId },
-    });
+    // if (subscribers.length === 1 || subscribers.length % 5 === 0) {
+    //   await this.notificationModel.create({
+    //     userId: subscriptionId,
+    //     type: 'subscribe',
+    //     value: subscribers.length,
+    //   });
+    // }
 
-    return subscribers;
+    return true;
   }
 
-  async unsubscribe(subscriberId: number, subscriptionId: number) {
+  async unsubscribe(subscriptionId: number, subscriberId: number) {
     await this.userSubscriberModel.destroy({
       where: { subscriberId, subscriptionId },
     });
 
-    const subscribers = await this.userModel.findAll({
-      where: { subscriberId },
+    return true;
+  }
+
+  async viewNotifications(userId: number) {
+    const notifications = await this.notificationModel.findAll({
+      where: { userId },
     });
 
-    return subscribers;
+    await notifications.forEach(async (notification) => {
+      if (notification.isSeen === false) {
+        notification.isSeen = true;
+        await notification.save();
+      }
+    });
+
+    return notifications;
   }
 
   async findAll(): Promise<User[]> {
-    return this.userModel.findAll<User>();
+    return this.userModel.scope('withoutPassword').findAll<User>();
+  }
+
+  async findOne(username: string, userId?: number): Promise<getUserInterface> {
+    const user = await this.userModel.scope('withoutPassword').findOne<User>({
+      where: { username },
+    });
+
+    if (!userId) {
+      return { user };
+    }
+
+    const subscribeRelation = await this.userSubscriberModel.findOne({
+      where: {
+        subscriberId: userId,
+        subscriptionId: user.id,
+      },
+    });
+    const amISubscribed = Boolean(subscribeRelation);
+    return { user, amISubscribed };
   }
 }

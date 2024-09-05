@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Patch,
@@ -14,6 +15,8 @@ import { User } from '../models/users.model';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { UserDto } from '../dto/UserDto';
 import { AuthRequest } from 'src/middlewares/authMiddleware';
+import { Notification } from '../models/notification.model';
+import { getUserInterface } from '../types/types';
 
 @Controller('/users')
 export class UsersController {
@@ -21,7 +24,10 @@ export class UsersController {
 
   @Patch('/avatar')
   @UseInterceptors(FileInterceptor('avatar'))
-  updateAvatar(@Req() req: AuthRequest, @UploadedFile() avatar): Promise<User> {
+  updateAvatar(
+    @Req() req: AuthRequest,
+    @UploadedFile() avatar,
+  ): Promise<string> {
     return this.usersService.updateAvatar(req.userId, avatar);
   }
 
@@ -31,12 +37,36 @@ export class UsersController {
   }
 
   @Post(':id/subscribe')
-  subscribe(@Param('id') id: number, @Req() req: AuthRequest): Promise<User[]> {
+  subscribe(
+    @Param('id') id: number,
+    @Req() req: AuthRequest,
+  ): Promise<boolean> {
     return this.usersService.subscribe(id, req.userId);
+  }
+
+  @Delete(':id/unsubscribe')
+  unsubscribe(
+    @Param('id') id: number,
+    @Req() req: AuthRequest,
+  ): Promise<boolean> {
+    return this.usersService.unsubscribe(id, req.userId);
+  }
+
+  @Post('/notifications')
+  viewNotifications(@Req() req: AuthRequest): Promise<Notification[]> {
+    return this.usersService.viewNotifications(req.userId);
   }
 
   @Get()
   getUsers(): Promise<User[]> {
     return this.usersService.findAll();
+  }
+
+  @Get(':username')
+  getOneUser(
+    @Param('username') username: string,
+    @Req() req: AuthRequest,
+  ): Promise<getUserInterface> {
+    return this.usersService.findOne(username, req.userId);
   }
 }
