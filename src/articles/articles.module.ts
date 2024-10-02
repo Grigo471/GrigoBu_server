@@ -1,4 +1,9 @@
-import { Module } from '@nestjs/common';
+import {
+  MiddlewareConsumer,
+  Module,
+  NestModule,
+  RequestMethod,
+} from '@nestjs/common';
 import { ArticlesController } from './articles.controller';
 import { SequelizeModule } from '@nestjs/sequelize';
 import { ArticlesService } from './articles.service';
@@ -10,19 +15,39 @@ import {
   ArticleImageBlock,
   ArticleCodeBlock,
 } from './models/articleBlocks.model';
+import { TagsController } from './tags.controller';
+import { AuthMiddleware } from 'src/middlewares/authMiddleware';
+import { OptionalAuthMiddleware } from 'src/middlewares/optionalAuthMiddleware';
+import { ArticleRate } from './models/articleRate.model';
+import { UsersModule } from 'src/users/users.module';
 
 @Module({
   imports: [
     SequelizeModule.forFeature([
       Article,
+      ArticleRate,
       Tag,
       ArticleTag,
       ArticleTextBlock,
       ArticleImageBlock,
       ArticleCodeBlock,
     ]),
+    UsersModule,
   ],
-  controllers: [ArticlesController],
+  controllers: [ArticlesController, TagsController],
   providers: [ArticlesService, FileService],
 })
-export class ArticlesModule {}
+export class ArticlesModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer
+      .apply(AuthMiddleware)
+      .forRoutes(
+        { path: 'articles', method: RequestMethod.POST },
+        { path: 'articles/:id/like', method: RequestMethod.POST },
+        { path: 'articles/:id/dislike', method: RequestMethod.POST },
+      );
+    consumer
+      .apply(OptionalAuthMiddleware)
+      .forRoutes({ path: 'articles/:id', method: RequestMethod.GET });
+  }
+}

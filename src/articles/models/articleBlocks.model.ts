@@ -1,6 +1,7 @@
 import {
   BelongsTo,
   Column,
+  DataType,
   ForeignKey,
   Model,
   Table,
@@ -18,7 +19,7 @@ export class ArticleTextBlock extends Model {
   @Column
   index: number;
 
-  @Column
+  @Column(DataType.STRING(2000))
   paragraphs: string;
 
   @ForeignKey(() => Article)

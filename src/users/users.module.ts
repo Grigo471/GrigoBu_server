@@ -28,6 +28,7 @@ import { OptionalAuthMiddleware } from 'src/middlewares/optionalAuthMiddleware';
       Notification,
     ]),
   ],
+  exports: [TokenService],
   controllers: [UsersController, AuthController],
   providers: [UsersService, AuthService, TokenService, FileService],
 })

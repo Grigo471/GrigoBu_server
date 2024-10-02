@@ -9,12 +9,18 @@ import {
   ArticleCodeBlock,
   ArticleImageBlock,
 } from './models/articleBlocks.model';
+import { User } from 'src/users';
+import { ArticleDto, Rate, RateAticleResult } from './types/types';
+import { ArticleRate } from './models/articleRate.model';
+import { CommentModel } from 'src/comments';
 
 @Injectable()
 export class ArticlesService {
   constructor(
     @InjectModel(Article)
     private articleModel: typeof Article,
+    @InjectModel(ArticleRate)
+    private articleRateModel: typeof ArticleRate,
     @InjectModel(Tag)
     private tagModel: typeof Tag,
     @InjectModel(ArticleTag)
@@ -33,16 +39,14 @@ export class ArticlesService {
     images: Express.Multer.File[],
   ): Promise<Article> {
     try {
-      const imgPaths = images.map((img) => this.fileService.createFile(img));
-      console.log(images);
-      dto.blocks.forEach((block, i) => {
-        if (block.type === 'image') {
-          images.forEach((image, j) => {
+      dto.blocks.forEach((block) => {
+        if (block.type === 'image' && block.src.startsWith('blob:')) {
+          images.forEach((image) => {
             if (
               image.originalname.split('.')[0] === block.src.split('/').pop()
             ) {
-              if (dto.blocks[i].type === 'image')
-                dto.blocks[i].src = imgPaths[j];
+              const src = this.fileService.createFile(image);
+              block.src = src;
             }
           });
         }
@@ -56,21 +60,21 @@ export class ArticlesService {
         userId: dto.userId,
       });
 
-      // const tags = await Promise.all(
-      //   dto.tags.map((tag) => {
-      //     const res = this.tagModel
-      //       .findOrCreate({ where: { tag } })
-      //       .then((t) => t[0]);
-      //     return res;
-      //   }),
-      // );
+      const tags = await Promise.all(
+        dto.tags.map((tag) => {
+          const res = this.tagModel
+            .findOrCreate({ where: { tag } })
+            .then((t) => t[0]);
+          return res;
+        }),
+      );
 
-      // await tags.forEach((tag) => {
-      //   this.articleTagModel.create({
-      //     tagId: tag.id,
-      //     articleId: article.id,
-      //   });
-      // });
+      await tags.forEach((tag) => {
+        this.articleTagModel.create({
+          tagId: tag.id,
+          articleId: article.id,
+        });
+      });
 
       await dto.blocks.forEach((block, index) => {
         switch (block.type) {
@@ -113,9 +117,167 @@ export class ArticlesService {
     }
   }
 
-  async findAll(): Promise<Article[]> {
-    return this.articleModel.findAll<Article>({
-      include: [Tag, ArticleCodeBlock, ArticleTextBlock, ArticleImageBlock],
+  async findAll(
+    userId: number,
+    limit: number,
+    page: number,
+    sort: 'views' | 'title' | 'createdAt',
+    order: 'asc' | 'desc',
+    search: string,
+  ): Promise<ArticleDto[]> {
+    const articles = await this.articleModel.findAll<Article>({
+      include: [
+        Tag,
+        ArticleCodeBlock,
+        ArticleTextBlock,
+        ArticleImageBlock,
+        User,
+        CommentModel,
+      ],
+      limit,
+      offset: (page - 1) * limit,
+      order: [[sort, order]],
     });
+
+    const articlesWithBlocks = articles.map((article) => {
+      const blocks = [];
+      blocks.push(...article.codeBlocks);
+      blocks.push(...article.textBlocks);
+      blocks.push(...article.imageBlocks);
+      blocks.sort((a, b) => a.index - b.index);
+
+      const tags = article.tags.map((t) => t.tag);
+
+      const commentsCount = article.comments.length;
+
+      return {
+        id: article.id,
+        title: article.title,
+        tags: tags,
+        createdAt: article.createdAt,
+        user: article.user,
+        rating: article.rating,
+        blocks,
+        commentsCount,
+      };
+    });
+
+    return articlesWithBlocks;
+  }
+
+  async getArticleById(
+    articleId: string,
+    userId?: number,
+  ): Promise<ArticleDto> {
+    const article = await this.articleModel.findOne<Article>({
+      where: { id: Number(articleId) },
+      include: [
+        Tag,
+        ArticleCodeBlock,
+        ArticleTextBlock,
+        ArticleImageBlock,
+        User,
+      ],
+    });
+    const blocks = [];
+    blocks.push(...article.codeBlocks);
+    blocks.push(...article.textBlocks);
+    blocks.push(...article.imageBlocks);
+    blocks.sort((a, b) => a.index - b.index);
+
+    const tags = article.tags.map((t) => t.tag);
+
+    let myRate;
+
+    if (userId) {
+      myRate = await this.articleRateModel.findOne({
+        where: { userId, articleId },
+      });
+    }
+
+    return {
+      id: article.id,
+      title: article.title,
+      tags: tags,
+      createdAt: article.createdAt,
+      user: article.user,
+      rating: article.rating,
+      blocks,
+      myRate: myRate.value,
+    };
+  }
+
+  async getArticleTags(): Promise<string[]> {
+    const tags = await this.tagModel.findAll<Tag>();
+    return tags.map((t) => t.tag).sort();
+  }
+
+  async likeArticle(
+    articleId: string,
+    userId: number,
+  ): Promise<RateAticleResult> {
+    const myRate = await this.articleRateModel
+      .findOrCreate({
+        where: { userId, articleId },
+      })
+      .then((r) => r[0]);
+
+    const article = await this.articleModel.findOne<Article>({
+      where: { id: Number(articleId) },
+    });
+
+    if (!myRate.value) {
+      article.rating += 1;
+      myRate.value = 1;
+    } else if (myRate.value === 1) {
+      article.rating -= 1;
+      myRate.value = 0;
+    } else {
+      article.rating += 2;
+      myRate.value = 1;
+    }
+
+    await article.save();
+    await myRate.save();
+
+    return {
+      articleId: article.id,
+      myRate: myRate.value,
+      rating: article.rating,
+    };
+  }
+
+  async dislikeArticle(
+    articleId: string,
+    userId: number,
+  ): Promise<RateAticleResult> {
+    const myRate = await this.articleRateModel
+      .findOrCreate({
+        where: { userId, articleId },
+      })
+      .then((r) => r[0]);
+
+    const article = await this.articleModel.findOne<Article>({
+      where: { id: Number(articleId) },
+    });
+
+    if (!myRate.value) {
+      article.rating -= 1;
+      myRate.value = -1;
+    } else if (myRate.value === -1) {
+      article.rating += 1;
+      myRate.value = 0;
+    } else {
+      article.rating -= 2;
+      myRate.value = -1;
+    }
+    await article.save();
+    await myRate.save();
+
+    return {
+      articleId: article.id,
+      myRate: myRate.value,
+      rating: article.rating,
+    };
   }
 }

@@ -10,7 +10,7 @@ import {
 } from 'sequelize-typescript';
 import { Token } from './token.model';
 import { CommentModel } from 'src/comments';
-import { Article } from 'src/articles';
+import { Article, ArticleRate } from 'src/articles';
 import { UserSettings } from './userSettings';
 
 @Scopes(() => ({
@@ -44,6 +44,9 @@ export class User extends Model {
 
   @HasMany(() => Article)
   articles: Article[];
+
+  @HasMany(() => ArticleRate)
+  articleRates: ArticleRate[];
 
   @HasMany(() => CommentModel)
   comments: CommentModel[];

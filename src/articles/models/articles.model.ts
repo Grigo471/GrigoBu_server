@@ -15,6 +15,7 @@ import {
   ArticleImageBlock,
   ArticleCodeBlock,
 } from './articleBlocks.model';
+import { ArticleRate } from './articleRate.model';
 
 @Table
 export class Article extends Model {
@@ -29,6 +30,9 @@ export class Article extends Model {
 
   @Column
   rating: number;
+
+  @HasMany(() => ArticleRate)
+  rates: ArticleRate[];
 
   @BelongsToMany(() => Tag, () => ArticleTag)
   tags: Tag[];
