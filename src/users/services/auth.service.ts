@@ -29,6 +29,8 @@ export class AuthService {
     const user = await this.userModel.create({
       username,
       password: hashPassword,
+      rating: 0,
+      role: 'user',
     });
 
     await this.userSettingsModel.create({ userId: user.id });

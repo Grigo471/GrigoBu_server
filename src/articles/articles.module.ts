@@ -20,6 +20,8 @@ import { AuthMiddleware } from 'src/middlewares/authMiddleware';
 import { OptionalAuthMiddleware } from 'src/middlewares/optionalAuthMiddleware';
 import { ArticleRate } from './models/articleRate.model';
 import { UsersModule } from 'src/users/users.module';
+import { User } from 'src/users';
+import { UserSubscriber } from 'src/users/models/users.model';
 
 @Module({
   imports: [
@@ -31,6 +33,8 @@ import { UsersModule } from 'src/users/users.module';
       ArticleTextBlock,
       ArticleImageBlock,
       ArticleCodeBlock,
+      User,
+      UserSubscriber,
     ]),
     UsersModule,
   ],
@@ -43,11 +47,15 @@ export class ArticlesModule implements NestModule {
       .apply(AuthMiddleware)
       .forRoutes(
         { path: 'articles', method: RequestMethod.POST },
-        { path: 'articles/:id/like', method: RequestMethod.POST },
-        { path: 'articles/:id/dislike', method: RequestMethod.POST },
+        { path: 'articles/subscriptions', method: RequestMethod.GET },
+        { path: 'articles/:id/rate', method: RequestMethod.POST },
       );
     consumer
       .apply(OptionalAuthMiddleware)
-      .forRoutes({ path: 'articles/:id', method: RequestMethod.GET });
+      .forRoutes(
+        { path: 'articles/:id', method: RequestMethod.GET },
+        { path: 'articles', method: RequestMethod.GET },
+        { path: 'articles/user/:username', method: RequestMethod.GET },
+      );
   }
 }

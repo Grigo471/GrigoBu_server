@@ -4,9 +4,9 @@ import {
   Model,
   HasMany,
   HasOne,
-  BelongsToMany,
   ForeignKey,
   Scopes,
+  BelongsTo,
 } from 'sequelize-typescript';
 import { Token } from './token.model';
 import { CommentModel } from 'src/comments';
@@ -31,10 +31,10 @@ export class User extends Model {
   status: string;
 
   @Column
-  rating: number = 0;
+  rating: number;
 
   @Column
-  role: string = 'user';
+  role: string;
 
   @HasOne(() => Token)
   refreshToken: Token;
@@ -51,10 +51,10 @@ export class User extends Model {
   @HasMany(() => CommentModel)
   comments: CommentModel[];
 
-  @BelongsToMany(() => User, () => UserSubscriber, 'subscriberId')
+  @HasMany(() => UserSubscriber, 'subscriberId')
   subscribers: User[];
 
-  @BelongsToMany(() => User, () => UserSubscriber, 'subscriptionId')
+  @HasMany(() => UserSubscriber, 'subscriptionId')
   subscribtions: User[];
 }
 
@@ -64,7 +64,13 @@ export class UserSubscriber extends Model {
   @Column
   subscriberId: number;
 
+  @BelongsTo(() => User)
+  subscriber: User;
+
   @ForeignKey(() => User)
   @Column
   subscriptionId: number;
+
+  @BelongsTo(() => User)
+  subscribtion: User;
 }

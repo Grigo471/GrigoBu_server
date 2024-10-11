@@ -19,7 +19,7 @@ export class ArticleTextBlock extends Model {
   @Column
   index: number;
 
-  @Column(DataType.STRING(2000))
+  @Column(DataType.STRING(10000))
   paragraphs: string;
 
   @ForeignKey(() => Article)
@@ -63,7 +63,7 @@ export class ArticleCodeBlock extends Model {
   @Column
   index: number;
 
-  @Column
+  @Column(DataType.STRING(10000))
   code: string;
 
   @ForeignKey(() => Article)

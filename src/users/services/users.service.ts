@@ -55,7 +55,10 @@ export class UsersService {
   }
 
   async subscribe(subscriptionId: number, subscriberId: number) {
-    await this.userSubscriberModel.create({ subscriberId, subscriptionId });
+    await this.userSubscriberModel.create({
+      subscriberId,
+      subscriptionId,
+    });
     // const subscribers = await this.userModel.findAll({
     //   where: { subscriptionId },
     // });

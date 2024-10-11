@@ -31,7 +31,7 @@ export class ArticlesController {
     @Query('page') page: number,
     @Query('sort') sort: 'views' | 'title' | 'createdAt',
     @Query('order') order: 'asc' | 'desc',
-    @Query('q') search: string,
+    @Query('search') search: string,
     @Req() req: AuthRequest,
   ): Promise<ArticleDto[]> {
     const { userId } = req;
@@ -45,6 +45,48 @@ export class ArticlesController {
     );
   }
 
+  @Get('/subscriptions')
+  getSubscriptions(
+    @Query('limit') limit: number,
+    @Query('page') page: number,
+    @Query('sort') sort: 'views' | 'title' | 'createdAt',
+    @Query('order') order: 'asc' | 'desc',
+    @Query('search') search: string,
+    @Req() req: AuthRequest,
+  ): Promise<ArticleDto[]> {
+    const { userId } = req;
+    return this.articlesService.getSubscriptions(
+      userId,
+      limit,
+      page,
+      sort,
+      order,
+      search,
+    );
+  }
+
+  @Get('/user/:username')
+  getUserArticles(
+    @Query('limit') limit: number,
+    @Query('page') page: number,
+    @Query('sort') sort: 'views' | 'title' | 'createdAt',
+    @Query('order') order: 'asc' | 'desc',
+    @Query('search') search: string,
+    @Param('username') username: string,
+    @Req() req: AuthRequest,
+  ): Promise<ArticleDto[]> {
+    const { userId } = req;
+    return this.articlesService.getUserArticles(
+      userId,
+      limit,
+      page,
+      sort,
+      order,
+      search,
+      username,
+    );
+  }
+
   @Get(':id')
   getArticleById(
     @Param('id') id: string,
@@ -54,21 +96,13 @@ export class ArticlesController {
     return this.articlesService.getArticleById(id, userId);
   }
 
-  @Post(':id/like')
-  likeArticle(
+  @Post(':id/rate')
+  rateArticle(
     @Param('id') id: string,
+    @Query('rate') rate: 'like' | 'dislike',
     @Req() req: AuthRequest,
   ): Promise<RateAticleResult> {
     const { userId } = req;
-    return this.articlesService.likeArticle(id, userId);
-  }
-
-  @Post(':id/dislike')
-  dislikeArticle(
-    @Param('id') id: string,
-    @Req() req: AuthRequest,
-  ): Promise<RateAticleResult> {
-    const { userId } = req;
-    return this.articlesService.dislikeArticle(id, userId);
+    return this.articlesService.rateArticle(id, rate, userId);
   }
 }
