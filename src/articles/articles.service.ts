@@ -188,7 +188,6 @@ export class ArticlesService {
     const articlesWithBlocks = await Promise.all(
       articles.map((article) => this.getArticleWithBlocks(article, userId)),
     );
-
     return articlesWithBlocks;
   }
 

@@ -1,4 +1,9 @@
-import { Injectable, NestMiddleware } from '@nestjs/common';
+import {
+  HttpException,
+  HttpStatus,
+  Injectable,
+  NestMiddleware,
+} from '@nestjs/common';
 import { NextFunction, Response } from 'express';
 import { TokenService } from 'src/users/services/token.service';
 import { AuthRequest } from './authMiddleware';
@@ -11,11 +16,13 @@ export class OptionalAuthMiddleware implements NestMiddleware {
     const authorizationHeader = req.headers.authorization;
     if (authorizationHeader) {
       const accessToken = authorizationHeader.split(' ')[1];
-      if (accessToken) {
+      console.log(authorizationHeader);
+      if (accessToken && accessToken.length > 0) {
         const userData = this.tokenService.validateAccessToken(accessToken);
-        if (userData) {
-          req.userId = userData.id;
+        if (!userData) {
+          throw new HttpException('Invalid token', HttpStatus.UNAUTHORIZED);
         }
+        req.userId = userData.id;
       }
     }
 
