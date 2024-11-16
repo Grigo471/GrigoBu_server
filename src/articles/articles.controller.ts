@@ -29,9 +29,10 @@ export class ArticlesController {
   getArticles(
     @Query('limit') limit: number,
     @Query('page') page: number,
-    @Query('sort') sort: 'views' | 'title' | 'createdAt',
+    @Query('sort') sort: 'rating' | 'createdAt',
     @Query('order') order: 'asc' | 'desc',
     @Query('search') search: string,
+    @Query('tags') tags: string,
     @Req() req: AuthRequest,
   ): Promise<ArticleDto[]> {
     const { userId } = req;
@@ -42,6 +43,7 @@ export class ArticlesController {
       sort,
       order,
       search,
+      tags,
     );
   }
 

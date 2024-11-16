@@ -162,13 +162,24 @@ export class ArticlesService {
     userId: number | undefined,
     limit: number,
     page: number,
-    sort: 'views' | 'title' | 'createdAt',
+    sort: 'rating' | 'createdAt',
     order: 'asc' | 'desc',
     search: string,
+    tags: string,
   ): Promise<ArticleDto[]> {
+    const tagsArray =
+      tags.length > 0 ? tags.replaceAll('%20', ' ').split(',') : null;
+
     const articles = await this.articleModel.findAll<Article>({
       include: [
-        Tag,
+        {
+          model: Tag,
+          where: tagsArray
+            ? {
+                tag: tagsArray,
+              }
+            : {},
+        },
         ArticleCodeBlock,
         ArticleTextBlock,
         ArticleImageBlock,

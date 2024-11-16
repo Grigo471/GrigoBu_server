@@ -16,7 +16,6 @@ export class OptionalAuthMiddleware implements NestMiddleware {
     const authorizationHeader = req.headers.authorization;
     if (authorizationHeader) {
       const accessToken = authorizationHeader.split(' ')[1];
-      console.log(authorizationHeader);
       if (accessToken && accessToken.length > 0) {
         const userData = this.tokenService.validateAccessToken(accessToken);
         if (!userData) {
