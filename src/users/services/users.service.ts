@@ -6,6 +6,7 @@ import { FileService } from 'src/file';
 import { Notification } from '../models/notification.model';
 import { getUserInterface } from '../types/types';
 import { Op } from 'sequelize';
+import { AuthRequest } from 'src/middlewares/authMiddleware';
 
 @Injectable()
 export class UsersService {
@@ -108,6 +109,32 @@ export class UsersService {
         username: {
           [Op.iLike]: '%' + search + '%',
         },
+      },
+      order: [[sort, order]],
+    });
+  }
+
+  async getSubscriptions(
+    { userId }: AuthRequest,
+    sort: 'rating' | 'createdAt' | 'username',
+    order: 'asc' | 'desc',
+    search: string,
+  ): Promise<User[]> {
+    const subscriptions = await this.userSubscriberModel
+      .findAll({
+        where: {
+          subscriberId: userId,
+        },
+        include: [{ model: User, as: 'subscribtion' }],
+      })
+      .then((data) => data.map((sub) => sub.subscriptionId));
+
+    return this.userModel.scope('withoutPassword').findAll<User>({
+      where: {
+        username: {
+          [Op.iLike]: '%' + search + '%',
+        },
+        id: subscriptions,
       },
       order: [[sort, order]],
     });

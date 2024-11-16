@@ -67,6 +67,16 @@ export class UsersController {
     return this.usersService.findAll(sort, order, search);
   }
 
+  @Get('/subscriptions')
+  getSubscriptions(
+    @Query('sort') sort: 'rating' | 'createdAt' | 'username',
+    @Query('order') order: 'asc' | 'desc',
+    @Query('search') search: string,
+    @Req() req: AuthRequest,
+  ): Promise<User[]> {
+    return this.usersService.getSubscriptions(req, sort, order, search);
+  }
+
   @Get(':username')
   getOneUser(
     @Param('username') username: string,
