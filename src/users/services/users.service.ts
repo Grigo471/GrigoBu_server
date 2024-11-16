@@ -5,6 +5,7 @@ import { UserDto } from '../dto/UserDto';
 import { FileService } from 'src/file';
 import { Notification } from '../models/notification.model';
 import { getUserInterface } from '../types/types';
+import { Op } from 'sequelize';
 
 @Injectable()
 export class UsersService {
@@ -97,8 +98,19 @@ export class UsersService {
     return notifications;
   }
 
-  async findAll(): Promise<User[]> {
-    return this.userModel.scope('withoutPassword').findAll<User>();
+  async findAll(
+    sort: 'rating' | 'createdAt' | 'username',
+    order: 'asc' | 'desc',
+    search: string,
+  ): Promise<User[]> {
+    return this.userModel.scope('withoutPassword').findAll<User>({
+      where: {
+        username: {
+          [Op.iLike]: '%' + search + '%',
+        },
+      },
+      order: [[sort, order]],
+    });
   }
 
   async findOne(username: string, userId?: number): Promise<getUserInterface> {

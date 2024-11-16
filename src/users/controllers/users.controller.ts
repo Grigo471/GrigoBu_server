@@ -6,6 +6,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   Req,
   UploadedFile,
   UseInterceptors,
@@ -58,8 +59,12 @@ export class UsersController {
   }
 
   @Get()
-  getUsers(): Promise<User[]> {
-    return this.usersService.findAll();
+  getUsers(
+    @Query('sort') sort: 'rating' | 'createdAt' | 'username',
+    @Query('order') order: 'asc' | 'desc',
+    @Query('search') search: string,
+  ): Promise<User[]> {
+    return this.usersService.findAll(sort, order, search);
   }
 
   @Get(':username')
