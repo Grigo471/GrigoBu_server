@@ -255,31 +255,55 @@ export class ArticlesService {
     username: string,
   ): Promise<ArticleDto[]> {
     const user = await this.userModel.findOne<User>({
+      include: [
+        {
+          model: Article,
+          include: [
+            Tag,
+            ArticleCodeBlock,
+            ArticleTextBlock,
+            ArticleImageBlock,
+            User,
+            CommentModel,
+          ],
+          where: {
+            title: {
+              [Op.iLike]: '%' + search + '%',
+            },
+          },
+          limit,
+          // @ts-expect-error: No offset property in Typescript, but it works
+          offset: (page - 1) * limit,
+          order: [[sort, order]],
+        },
+      ],
       where: { username },
     });
 
-    const articles = await this.articleModel.findAll<Article>({
-      include: [
-        Tag,
-        ArticleCodeBlock,
-        ArticleTextBlock,
-        ArticleImageBlock,
-        User,
-        CommentModel,
-      ],
-      where: {
-        title: {
-          [Op.iLike]: '%' + search + '%',
-        },
-        userId: user.id,
-      },
-      limit,
-      offset: (page - 1) * limit,
-      order: [[sort, order]],
-    });
+    // const articles = await this.articleModel.findAll<Article>({
+    //   include: [
+    //     Tag,
+    //     ArticleCodeBlock,
+    //     ArticleTextBlock,
+    //     ArticleImageBlock,
+    //     User,
+    //     CommentModel,
+    //   ],
+    //   where: {
+    //     title: {
+    //       [Op.iLike]: '%' + search + '%',
+    //     },
+    //     userId: user.id,
+    //   },
+    //   limit,
+    //   offset: (page - 1) * limit,
+    //   order: [[sort, order]],
+    // });
 
     const articlesWithBlocks = await Promise.all(
-      articles.map((article) => this.getArticleWithBlocks(article, userId)),
+      user.articles.map((article) =>
+        this.getArticleWithBlocks(article, userId),
+      ),
     );
 
     return articlesWithBlocks;
@@ -313,7 +337,7 @@ export class ArticlesService {
     userId: number,
   ): Promise<RateAticleResult> {
     if (!rate) throw new HttpException(`No rate`, HttpStatus.BAD_REQUEST);
-    console.log(rate);
+
     const myRate = await this.articleRateModel
       .findOrCreate({
         where: { userId, articleId },
@@ -321,12 +345,11 @@ export class ArticlesService {
       .then((r) => r[0]);
 
     const article = await this.articleModel.findOne<Article>({
+      include: [User],
       where: { id: Number(articleId) },
     });
 
-    const user = await this.userModel.findOne<User>({
-      where: { id: article.userId },
-    });
+    const user = article.user;
 
     const currRate = myRate.value;
 
