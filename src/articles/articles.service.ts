@@ -280,26 +280,6 @@ export class ArticlesService {
       where: { username },
     });
 
-    // const articles = await this.articleModel.findAll<Article>({
-    //   include: [
-    //     Tag,
-    //     ArticleCodeBlock,
-    //     ArticleTextBlock,
-    //     ArticleImageBlock,
-    //     User,
-    //     CommentModel,
-    //   ],
-    //   where: {
-    //     title: {
-    //       [Op.iLike]: '%' + search + '%',
-    //     },
-    //     userId: user.id,
-    //   },
-    //   limit,
-    //   offset: (page - 1) * limit,
-    //   order: [[sort, order]],
-    // });
-
     const articlesWithBlocks = await Promise.all(
       user.articles.map((article) =>
         this.getArticleWithBlocks(article, userId),

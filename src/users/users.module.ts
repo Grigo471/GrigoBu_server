@@ -43,6 +43,9 @@ export class UsersModule implements NestModule {
       .forRoutes(UsersController);
     consumer
       .apply(OptionalAuthMiddleware)
-      .forRoutes({ path: 'users/:username', method: RequestMethod.GET });
+      .forRoutes(
+        { path: 'users/:username', method: RequestMethod.GET },
+        { path: 'users', method: RequestMethod.GET },
+      );
   }
 }

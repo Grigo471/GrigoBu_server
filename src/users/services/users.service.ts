@@ -1,12 +1,10 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { User, UserSubscriber } from '../models/users.model';
 import { InjectModel } from '@nestjs/sequelize';
-import { UserDto } from '../dto/UserDto';
+import { getProfileDto, UserDto } from '../dto/UserDto';
 import { FileService } from 'src/file';
 import { Notification } from '../models/notification.model';
-import { getUserInterface } from '../types/types';
 import { Op } from 'sequelize';
-import { AuthRequest } from 'src/middlewares/authMiddleware';
 
 @Injectable()
 export class UsersService {
@@ -73,7 +71,7 @@ export class UsersService {
     //   });
     // }
 
-    return true;
+    return subscriptionId;
   }
 
   async unsubscribe(subscriptionId: number, subscriberId: number) {
@@ -81,7 +79,7 @@ export class UsersService {
       where: { subscriberId, subscriptionId },
     });
 
-    return true;
+    return subscriptionId;
   }
 
   async viewNotifications(userId: number) {
@@ -103,8 +101,9 @@ export class UsersService {
     sort: 'rating' | 'createdAt' | 'username',
     order: 'asc' | 'desc',
     search: string,
-  ): Promise<User[]> {
-    return this.userModel.scope('withoutPassword').findAll<User>({
+    userId?: number,
+  ): Promise<getProfileDto[]> {
+    const users = await this.userModel.scope('withoutPassword').findAll<User>({
       where: {
         username: {
           [Op.iLike]: '%' + search + '%',
@@ -112,14 +111,31 @@ export class UsersService {
       },
       order: [[sort, order]],
     });
+
+    if (!userId) return users.map((user) => new getProfileDto(user));
+
+    const usersWithSubInfo = await Promise.all(
+      users.map(async (user) => {
+        const subscribeRelation = await this.userSubscriberModel.findOne({
+          where: {
+            subscriberId: userId,
+            subscriptionId: user.id,
+          },
+        });
+        const amISubscribed = Boolean(subscribeRelation);
+        return new getProfileDto(user, amISubscribed);
+      }),
+    );
+
+    return usersWithSubInfo;
   }
 
   async getSubscriptions(
-    { userId }: AuthRequest,
     sort: 'rating' | 'createdAt' | 'username',
     order: 'asc' | 'desc',
     search: string,
-  ): Promise<User[]> {
+    userId: number,
+  ): Promise<getProfileDto[]> {
     const subscriptions = await this.userSubscriberModel
       .findAll({
         where: {
@@ -129,24 +145,27 @@ export class UsersService {
       })
       .then((data) => data.map((sub) => sub.subscriptionId));
 
-    return this.userModel.scope('withoutPassword').findAll<User>({
-      where: {
-        username: {
-          [Op.iLike]: '%' + search + '%',
+    return this.userModel
+      .scope('withoutPassword')
+      .findAll<User>({
+        where: {
+          username: {
+            [Op.iLike]: '%' + search + '%',
+          },
+          id: subscriptions,
         },
-        id: subscriptions,
-      },
-      order: [[sort, order]],
-    });
+        order: [[sort, order]],
+      })
+      .then((data) => data.map((user) => new getProfileDto(user, true)));
   }
 
-  async findOne(username: string, userId?: number): Promise<getUserInterface> {
+  async findOne(username: string, userId?: number): Promise<getProfileDto> {
     const user = await this.userModel.scope('withoutPassword').findOne<User>({
       where: { username },
     });
 
     if (!userId) {
-      return { user };
+      return new getProfileDto(user);
     }
 
     const subscribeRelation = await this.userSubscriberModel.findOne({
@@ -156,6 +175,6 @@ export class UsersService {
       },
     });
     const amISubscribed = Boolean(subscribeRelation);
-    return { user, amISubscribed };
+    return new getProfileDto(user, amISubscribed);
   }
 }

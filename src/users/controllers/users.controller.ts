@@ -14,10 +14,9 @@ import {
 import { UsersService } from '../services/users.service';
 import { User } from '../models/users.model';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { UserDto } from '../dto/UserDto';
+import { getProfileDto, UserDto } from '../dto/UserDto';
 import { AuthRequest } from 'src/middlewares/authMiddleware';
 import { Notification } from '../models/notification.model';
-import { getUserInterface } from '../types/types';
 
 @Controller('/users')
 export class UsersController {
@@ -38,10 +37,7 @@ export class UsersController {
   }
 
   @Post(':id/subscribe')
-  subscribe(
-    @Param('id') id: number,
-    @Req() req: AuthRequest,
-  ): Promise<boolean> {
+  subscribe(@Param('id') id: number, @Req() req: AuthRequest): Promise<number> {
     return this.usersService.subscribe(id, req.userId);
   }
 
@@ -49,7 +45,7 @@ export class UsersController {
   unsubscribe(
     @Param('id') id: number,
     @Req() req: AuthRequest,
-  ): Promise<boolean> {
+  ): Promise<number> {
     return this.usersService.unsubscribe(id, req.userId);
   }
 
@@ -63,8 +59,9 @@ export class UsersController {
     @Query('sort') sort: 'rating' | 'createdAt' | 'username',
     @Query('order') order: 'asc' | 'desc',
     @Query('search') search: string,
-  ): Promise<User[]> {
-    return this.usersService.findAll(sort, order, search);
+    @Req() req: AuthRequest,
+  ): Promise<getProfileDto[]> {
+    return this.usersService.findAll(sort, order, search, req.userId);
   }
 
   @Get('/subscriptions')
@@ -73,15 +70,15 @@ export class UsersController {
     @Query('order') order: 'asc' | 'desc',
     @Query('search') search: string,
     @Req() req: AuthRequest,
-  ): Promise<User[]> {
-    return this.usersService.getSubscriptions(req, sort, order, search);
+  ): Promise<getProfileDto[]> {
+    return this.usersService.getSubscriptions(sort, order, search, req.userId);
   }
 
   @Get(':username')
   getOneUser(
     @Param('username') username: string,
     @Req() req: AuthRequest,
-  ): Promise<getUserInterface> {
+  ): Promise<getProfileDto> {
     return this.usersService.findOne(username, req.userId);
   }
 }
