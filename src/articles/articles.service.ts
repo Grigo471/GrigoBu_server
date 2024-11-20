@@ -202,6 +202,58 @@ export class ArticlesService {
     return articlesWithBlocks;
   }
 
+  async getRated(
+    userId: number | undefined,
+    limit: number,
+    page: number,
+    sort: 'rating' | 'createdAt',
+    order: 'asc' | 'desc',
+    search: string,
+    tags: string,
+    myRate: 1 | -1,
+  ): Promise<ArticleDto[]> {
+    const tagsArray =
+      tags.length > 0 ? tags.replaceAll('%20', ' ').split(',') : null;
+
+    const ratedArticles = await this.articleRateModel
+      .findAll({
+        where: { userId, value: myRate },
+      })
+      .then((data) => data.map((rate) => rate.articleId));
+
+    const articles = await this.articleModel.findAll<Article>({
+      include: [
+        {
+          model: Tag,
+          where: tagsArray
+            ? {
+                tag: tagsArray,
+              }
+            : {},
+        },
+        ArticleCodeBlock,
+        ArticleTextBlock,
+        ArticleImageBlock,
+        User,
+        CommentModel,
+      ],
+      where: {
+        id: ratedArticles,
+        title: {
+          [Op.iLike]: '%' + search + '%',
+        },
+      },
+      limit,
+      offset: (page - 1) * limit,
+      order: [[sort, order]],
+    });
+
+    const articlesWithBlocks = await Promise.all(
+      articles.map((article) => this.getArticleWithBlocks(article, userId)),
+    );
+    return articlesWithBlocks;
+  }
+
   async getSubscriptions(
     userId: number,
     limit: number,

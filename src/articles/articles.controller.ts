@@ -47,6 +47,30 @@ export class ArticlesController {
     );
   }
 
+  @Get('myRate')
+  getRatedArticles(
+    @Query('limit') limit: number,
+    @Query('page') page: number,
+    @Query('sort') sort: 'rating' | 'createdAt',
+    @Query('order') order: 'asc' | 'desc',
+    @Query('search') search: string,
+    @Query('tags') tags: string,
+    @Query('myRate') myRate: 1 | -1,
+    @Req() req: AuthRequest,
+  ): Promise<ArticleDto[]> {
+    const { userId } = req;
+    return this.articlesService.getRated(
+      userId,
+      limit,
+      page,
+      sort,
+      order,
+      search,
+      tags,
+      myRate,
+    );
+  }
+
   @Get('/subscriptions')
   getSubscriptions(
     @Query('limit') limit: number,
