@@ -49,6 +49,7 @@ export class ArticlesModule implements NestModule {
         { path: 'articles', method: RequestMethod.POST },
         { path: 'articles/subscriptions', method: RequestMethod.GET },
         { path: 'articles/:id/rate', method: RequestMethod.POST },
+        { path: 'articles/myRate', method: RequestMethod.GET },
       );
     consumer
       .apply(OptionalAuthMiddleware)

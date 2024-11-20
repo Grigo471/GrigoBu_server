@@ -47,7 +47,7 @@ export class ArticlesController {
     );
   }
 
-  @Get('myRate')
+  @Get('/myRate')
   getRatedArticles(
     @Query('limit') limit: number,
     @Query('page') page: number,
