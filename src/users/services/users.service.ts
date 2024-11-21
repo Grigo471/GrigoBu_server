@@ -159,6 +159,49 @@ export class UsersService {
       .then((data) => data.map((user) => new getProfileDto(user, true)));
   }
 
+  async getSubscribers(
+    sort: 'rating' | 'createdAt' | 'username',
+    order: 'asc' | 'desc',
+    search: string,
+    userId: number,
+  ): Promise<getProfileDto[]> {
+    const subscribersIds = await this.userSubscriberModel
+      .findAll({
+        where: {
+          subscriptionId: userId,
+        },
+        include: [{ model: User, as: 'subscriber' }],
+      })
+      .then((data) => data.map((sub) => sub.subscriberId));
+
+    const subscribers = await this.userModel
+      .scope('withoutPassword')
+      .findAll<User>({
+        where: {
+          username: {
+            [Op.iLike]: '%' + search + '%',
+          },
+          id: subscribersIds,
+        },
+        order: [[sort, order]],
+      });
+
+    const subscribersWithSubInfo = await Promise.all(
+      subscribers.map(async (subscriber) => {
+        const subscribeRelation = await this.userSubscriberModel.findOne({
+          where: {
+            subscriberId: userId,
+            subscriptionId: subscriber.id,
+          },
+        });
+        const amISubscribed = Boolean(subscribeRelation);
+        return new getProfileDto(subscriber, amISubscribed);
+      }),
+    );
+
+    return subscribersWithSubInfo;
+  }
+
   async findOne(username: string, userId?: number): Promise<getProfileDto> {
     const user = await this.userModel.scope('withoutPassword').findOne<User>({
       where: { username },

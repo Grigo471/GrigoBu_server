@@ -15,6 +15,7 @@ import { ArticleRate } from './models/articleRate.model';
 import { CommentModel } from 'src/comments';
 import { Op } from 'sequelize';
 import { UserSubscriber } from 'src/users/models/users.model';
+import { getProfileDto } from 'src/users/dto/UserDto';
 
 @Injectable()
 export class ArticlesService {
@@ -126,6 +127,7 @@ export class ArticlesService {
   async getArticleWithBlocks(
     article: Article,
     userId?: number,
+    amISubscribed?: boolean,
   ): Promise<ArticleDto> {
     const blocks = [];
     blocks.push(...article.codeBlocks);
@@ -150,7 +152,7 @@ export class ArticlesService {
       title: article.title,
       tags: tags,
       createdAt: article.createdAt,
-      user: article.user,
+      user: new getProfileDto(article.user, amISubscribed),
       rating: article.rating,
       blocks,
       myRate: myRate?.value,
@@ -168,7 +170,7 @@ export class ArticlesService {
     tags: string,
   ): Promise<ArticleDto[]> {
     const tagsArray =
-      tags.length > 0 ? tags.replaceAll('%20', ' ').split(',') : null;
+      tags?.length > 0 ? tags.replaceAll('%20', ' ').split(',') : null;
 
     const articles = await this.articleModel.findAll<Article>({
       include: [
@@ -213,7 +215,7 @@ export class ArticlesService {
     myRate: 1 | -1,
   ): Promise<ArticleDto[]> {
     const tagsArray =
-      tags.length > 0 ? tags.replaceAll('%20', ' ').split(',') : null;
+      tags?.length > 0 ? tags.replaceAll('%20', ' ').split(',') : null;
 
     const ratedArticles = await this.articleRateModel
       .findAll({
@@ -355,7 +357,18 @@ export class ArticlesService {
         User,
       ],
     });
-    return this.getArticleWithBlocks(article, userId);
+
+    if (!userId) return this.getArticleWithBlocks(article, userId);
+    const subscribeRelation = await this.userSubscriberModel.findOne({
+      where: {
+        subscriberId: userId,
+        subscriptionId: article.user.id,
+      },
+    });
+
+    const amISubscribed = Boolean(subscribeRelation);
+
+    return this.getArticleWithBlocks(article, userId, amISubscribed);
   }
 
   async getArticleTags(): Promise<string[]> {

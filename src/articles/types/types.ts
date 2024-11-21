@@ -1,4 +1,4 @@
-import { User } from 'src/users';
+import { getProfileDto } from 'src/users/dto/UserDto';
 
 export type ArticleBlockType = 'code' | 'image' | 'text';
 
@@ -38,7 +38,7 @@ export interface ArticleDto {
   rating: number;
   myRate?: Rate;
   tags: string[];
-  user: User;
+  user: getProfileDto;
   createdAt: string;
   blocks: ArticleBlock[];
   commentsCount?: number;
