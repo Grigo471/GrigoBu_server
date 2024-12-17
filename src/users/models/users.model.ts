@@ -1,76 +1,128 @@
 import {
-  Table,
-  Column,
-  Model,
-  HasMany,
-  HasOne,
-  ForeignKey,
-  Scopes,
-  BelongsTo,
+    Table,
+    Column,
+    Model,
+    HasMany,
+    HasOne,
+    ForeignKey,
+    Scopes,
+    BelongsTo,
+    DataType,
 } from 'sequelize-typescript';
 import { Token } from './token.model';
 import { CommentModel } from 'src/comments';
 import { Article, ArticleRate } from 'src/articles';
 import { UserSettings } from './userSettings';
+import { ApiProperty } from '@nestjs/swagger';
+
+interface UserCreationAttributes {
+    username: string;
+    password: string;
+}
 
 @Scopes(() => ({
-  withoutPassword: { attributes: { exclude: ['password'] } },
+    withoutPassword: { attributes: { exclude: ['password'] } },
 }))
 @Table
-export class User extends Model {
-  @Column
-  username: string;
+export class User extends Model<User, UserCreationAttributes> {
+    @ApiProperty({
+        example: 'Grigo',
+        description: 'Уникальное имя пользователя',
+    })
+    @Column({ type: DataType.STRING(24), unique: true, allowNull: false })
+    username: string;
 
-  @Column
-  password: string;
+    @ApiProperty({
+        description: 'Хэшированный пароль пользователя',
+    })
+    @Column({ type: DataType.STRING, allowNull: false })
+    password: string;
 
-  @Column
-  avatar: string;
+    @ApiProperty({
+        example: '1dded74a-4d38-4640-a9f0-527f1b017c42.jpg',
+        description: 'Имя файла с аватаркой, находящегося в папке static',
+    })
+    @Column({ type: DataType.STRING, allowNull: true })
+    avatar: string;
 
-  @Column
-  status: string;
+    @ApiProperty({
+        example: 'Всем привет! Меня зовут Григо, я люблю Властелин колец',
+        description: 'Статус пользователя, который высвечивается в его профиле',
+    })
+    @Column({ type: DataType.STRING, allowNull: true })
+    status: string;
 
-  @Column
-  rating: number;
+    @ApiProperty({
+        description:
+            'Рейтинг пользователя, является суммой оценок, которые поставили его статьям другие пользователи',
+    })
+    @Column({ type: DataType.NUMBER, defaultValue: 0 })
+    rating: number;
 
-  @Column
-  role: string;
+    @ApiProperty({
+        example: 'admin',
+        description: 'Роль пользователя (admin, moderator, user)',
+    })
+    @Column({ type: DataType.STRING, defaultValue: 'user' })
+    role: string;
 
-  @HasOne(() => Token)
-  refreshToken: Token;
+    @ApiProperty({
+        description:
+            'Refresh токен пользователя, по которому происходит валидация пользователя и обновление access токена',
+    })
+    @HasOne(() => Token)
+    refreshToken: Token;
 
-  @HasOne(() => UserSettings)
-  settings: UserSettings;
+    @ApiProperty({
+        description: 'Пользовательские настройки (тема, feature flags и т.д.)',
+    })
+    @HasOne(() => UserSettings)
+    settings: UserSettings;
 
-  @HasMany(() => Article)
-  articles: Article[];
+    @ApiProperty({
+        description: 'Статьи, опубликованные пользователем',
+    })
+    @HasMany(() => Article)
+    articles: Article[];
 
-  @HasMany(() => ArticleRate)
-  articleRates: ArticleRate[];
+    @ApiProperty({
+        description: 'Оценки статей, поставленные данным пользователем',
+    })
+    @HasMany(() => ArticleRate)
+    articleRates: ArticleRate[];
 
-  @HasMany(() => CommentModel)
-  comments: CommentModel[];
+    @ApiProperty({
+        description: 'Комментарии к статьям, оставленные данным пользователем',
+    })
+    @HasMany(() => CommentModel)
+    comments: CommentModel[];
 
-  @HasMany(() => UserSubscriber, 'subscriberId')
-  subscribers: User[];
+    @ApiProperty({
+        description: 'Подписчики пользователя',
+    })
+    @HasMany(() => UserSubscriber, 'subscriptionId')
+    subscribers: User[];
 
-  @HasMany(() => UserSubscriber, 'subscriptionId')
-  subscribtions: User[];
+    @ApiProperty({
+        description: 'Пользователи, на которых подписан данный пользователь',
+    })
+    @HasMany(() => UserSubscriber, 'subscriberId')
+    subscriptions: User[];
 }
 
 @Table
 export class UserSubscriber extends Model {
-  @ForeignKey(() => User)
-  @Column
-  subscriberId: number;
+    @ForeignKey(() => User)
+    @Column
+    subscriberId: number;
 
-  @BelongsTo(() => User)
-  subscriber: User;
+    @BelongsTo(() => User)
+    subscriber: User;
 
-  @ForeignKey(() => User)
-  @Column
-  subscriptionId: number;
+    @ForeignKey(() => User)
+    @Column
+    subscriptionId: number;
 
-  @BelongsTo(() => User)
-  subscribtion: User;
+    @BelongsTo(() => User)
+    subscription: User;
 }

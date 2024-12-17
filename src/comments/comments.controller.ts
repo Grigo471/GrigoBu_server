@@ -7,20 +7,20 @@ import { Answer } from './models/answers.model';
 
 @Controller('/comments')
 export class CommentsController {
-  constructor(private readonly commentsService: CommentsService) {}
+    constructor(private readonly commentsService: CommentsService) {}
 
-  @Post()
-  postComment(@Body() dto: CreateCommentDto): Promise<CommentModel> {
-    return this.commentsService.create(dto);
-  }
+    @Post()
+    postComment(@Body() dto: CreateCommentDto): Promise<CommentModel> {
+        return this.commentsService.create(dto);
+    }
 
-  @Post('/answers')
-  postAnswer(@Body() dto: CreateAnswerDto): Promise<Answer> {
-    return this.commentsService.createAnswer(dto);
-  }
+    @Post('/answers')
+    postAnswer(@Body() dto: CreateAnswerDto): Promise<Answer> {
+        return this.commentsService.createAnswer(dto);
+    }
 
-  @Get(':id')
-  getComments(@Param('id') articleId: string): Promise<CommentModel[]> {
-    return this.commentsService.findAll(Number(articleId));
-  }
+    @Get(':id')
+    getComments(@Param('id') articleId: string): Promise<CommentModel[]> {
+        return this.commentsService.findAll(Number(articleId));
+    }
 }

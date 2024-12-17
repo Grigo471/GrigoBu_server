@@ -9,28 +9,28 @@ import { CommentsModule } from './comments/comments.module';
 import { ConfigModule } from '@nestjs/config';
 
 @Module({
-  imports: [
-    ConfigModule.forRoot({
-      envFilePath: '.env',
-    }),
-    ServeStaticModule.forRoot({
-      rootPath: path.resolve(__dirname, '..', 'static'),
-    }),
-    SequelizeModule.forRoot({
-      dialect: 'postgres',
-      host: 'localhost',
-      port: 5432,
-      username: 'postgres',
-      password: 'Cvigun678101255',
-      database: 'nest-grigobu',
-      models: [],
-      autoLoadModels: true,
-      synchronize: true,
-    }),
-    ArticlesModule,
-    CommentsModule,
-    UsersModule,
-    FileModule,
-  ],
+    imports: [
+        ConfigModule.forRoot({
+            envFilePath: `.${process.env.NODE_ENV}.env`,
+        }),
+        ServeStaticModule.forRoot({
+            rootPath: path.resolve(__dirname, '..', 'static'),
+        }),
+        SequelizeModule.forRoot({
+            dialect: 'postgres',
+            host: process.env.POSTGRES_HOST,
+            port: Number(process.env.POSTGRESS_PORT),
+            username: process.env.POSTGRES_USERNAME,
+            password: process.env.POSTGRES_PASSWORD,
+            database: process.env.POSTGRES_DB,
+            models: [],
+            autoLoadModels: true,
+            synchronize: true,
+        }),
+        ArticlesModule,
+        CommentsModule,
+        UsersModule,
+        FileModule,
+    ],
 })
 export class AppModule {}

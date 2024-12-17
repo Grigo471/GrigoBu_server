@@ -1,5 +1,5 @@
 export interface CreateCommentDto {
-  text: string;
-  userId: number;
-  articleId: number;
+    text: string;
+    userId: number;
+    articleId: number;
 }

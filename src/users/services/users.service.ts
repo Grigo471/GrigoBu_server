@@ -8,216 +8,234 @@ import { Op } from 'sequelize';
 
 @Injectable()
 export class UsersService {
-  constructor(
-    @InjectModel(User)
-    private userModel: typeof User,
-    @InjectModel(UserSubscriber)
-    private userSubscriberModel: typeof UserSubscriber,
-    @InjectModel(Notification)
-    private notificationModel: typeof Notification,
-    private fileService: FileService,
-  ) {}
+    constructor(
+        @InjectModel(User)
+        private userModel: typeof User,
 
-  async updateAvatar(id: number, file?: Express.Multer.File) {
-    if (!file) {
-      throw new HttpException(`No image file`, HttpStatus.BAD_REQUEST);
-    }
-    const user = await this.userModel.findOne({ where: { id } });
+        @InjectModel(UserSubscriber)
+        private userSubscriberModel: typeof UserSubscriber,
 
-    if (!user) {
-      throw new HttpException(
-        { error: `User not found`, status: HttpStatus.BAD_REQUEST },
-        HttpStatus.BAD_REQUEST,
-      );
-    }
+        @InjectModel(Notification)
+        private notificationModel: typeof Notification,
+        private fileService: FileService,
+    ) {}
 
-    const avatar = this.fileService.createFile(file);
+    async updateAvatar(id: number, file?: Express.Multer.File) {
+        if (!file) {
+            throw new HttpException(`No image file`, HttpStatus.BAD_REQUEST);
+        }
+        const user = await this.userModel.findOne({ where: { id } });
 
-    user.avatar = avatar;
-    await user.save();
+        if (!user) {
+            throw new HttpException(
+                { error: `User not found`, status: HttpStatus.BAD_REQUEST },
+                HttpStatus.BAD_REQUEST,
+            );
+        }
 
-    return user.avatar;
-  }
+        const avatar = this.fileService.createFile(file);
 
-  async updateStatus(dto: UserDto) {
-    const user = await this.userModel.findOne({ where: { id: dto.id } });
+        user.avatar = avatar;
+        await user.save();
 
-    if (!user) {
-      throw new HttpException(
-        `User ${dto.username} not found`,
-        HttpStatus.BAD_REQUEST,
-      );
+        return user.avatar;
     }
 
-    user.status = dto.status;
+    async updateStatus(dto: UserDto) {
+        const user = await this.userModel.findOne({ where: { id: dto.id } });
 
-    return user;
-  }
+        if (!user) {
+            throw new HttpException(
+                `User ${dto.username} not found`,
+                HttpStatus.BAD_REQUEST,
+            );
+        }
 
-  async subscribe(subscriptionId: number, subscriberId: number) {
-    await this.userSubscriberModel.create({
-      subscriberId,
-      subscriptionId,
-    });
-    // const subscribers = await this.userModel.findAll({
-    //   where: { subscriptionId },
-    // });
+        user.status = dto.status;
 
-    // if (subscribers.length === 1 || subscribers.length % 5 === 0) {
-    //   await this.notificationModel.create({
-    //     userId: subscriptionId,
-    //     type: 'subscribe',
-    //     value: subscribers.length,
-    //   });
-    // }
+        return user;
+    }
 
-    return subscriptionId;
-  }
+    async subscribe(subscriptionId: number, subscriberId: number) {
+        await this.userSubscriberModel.create({
+            subscriberId,
+            subscriptionId,
+        });
+        // const subscribers = await this.userModel.findAll({
+        //   where: { subscriptionId },
+        // });
 
-  async unsubscribe(subscriptionId: number, subscriberId: number) {
-    await this.userSubscriberModel.destroy({
-      where: { subscriberId, subscriptionId },
-    });
+        // if (subscribers.length === 1 || subscribers.length % 5 === 0) {
+        //   await this.notificationModel.create({
+        //     userId: subscriptionId,
+        //     type: 'subscribe',
+        //     value: subscribers.length,
+        //   });
+        // }
 
-    return subscriptionId;
-  }
+        return subscriptionId;
+    }
 
-  async viewNotifications(userId: number) {
-    const notifications = await this.notificationModel.findAll({
-      where: { userId },
-    });
+    async unsubscribe(subscriptionId: number, subscriberId: number) {
+        await this.userSubscriberModel.destroy({
+            where: { subscriberId, subscriptionId },
+        });
 
-    await notifications.forEach(async (notification) => {
-      if (notification.isSeen === false) {
-        notification.isSeen = true;
-        await notification.save();
-      }
-    });
+        return subscriptionId;
+    }
 
-    return notifications;
-  }
+    async viewNotifications(userId: number) {
+        const notifications = await this.notificationModel.findAll({
+            where: { userId },
+        });
 
-  async findAll(
-    sort: 'rating' | 'createdAt' | 'username',
-    order: 'asc' | 'desc',
-    search: string,
-    userId?: number,
-  ): Promise<getProfileDto[]> {
-    const users = await this.userModel.scope('withoutPassword').findAll<User>({
-      where: {
-        username: {
-          [Op.iLike]: '%' + search + '%',
-        },
-      },
-      order: [[sort, order]],
-    });
+        await notifications.forEach(async (notification) => {
+            if (notification.isSeen === false) {
+                notification.isSeen = true;
+                await notification.save();
+            }
+        });
 
-    if (!userId) return users.map((user) => new getProfileDto(user));
+        return notifications;
+    }
 
-    const usersWithSubInfo = await Promise.all(
-      users.map(async (user) => {
+    async findAll(
+        sort: 'rating' | 'createdAt' | 'username',
+        order: 'asc' | 'desc',
+        search: string,
+        userId?: number,
+    ): Promise<getProfileDto[]> {
+        const users = await this.userModel
+            .scope('withoutPassword')
+            .findAll<User>({
+                where: {
+                    username: {
+                        [Op.iLike]: '%' + search + '%',
+                    },
+                },
+                order: [[sort, order]],
+            });
+
+        if (!userId) return users.map((user) => new getProfileDto(user));
+
+        const usersWithSubInfo = await Promise.all(
+            users.map(async (user) => {
+                const subscribeRelation =
+                    await this.userSubscriberModel.findOne({
+                        where: {
+                            subscriberId: userId,
+                            subscriptionId: user.id,
+                        },
+                    });
+                const amISubscribed = Boolean(subscribeRelation);
+                return new getProfileDto(user, amISubscribed);
+            }),
+        );
+
+        return usersWithSubInfo;
+    }
+
+    async getSubscriptions(
+        sort: 'rating' | 'createdAt' | 'username',
+        order: 'asc' | 'desc',
+        search: string,
+        userId: number,
+    ): Promise<getProfileDto[]> {
+        const subscriptions = await this.userSubscriberModel
+            .findAll({
+                where: {
+                    subscriberId: userId,
+                },
+                include: [{ model: User, as: 'subscription' }],
+            })
+            .then((data) => data.map((sub) => sub.subscriptionId));
+
+        return this.userModel
+            .scope('withoutPassword')
+            .findAll<User>({
+                where: {
+                    username: {
+                        [Op.iLike]: '%' + search + '%',
+                    },
+                    id: subscriptions,
+                },
+                order: [[sort, order]],
+            })
+            .then((data) => data.map((user) => new getProfileDto(user, true)));
+    }
+
+    async getSubscribers(
+        sort: 'rating' | 'createdAt' | 'username',
+        order: 'asc' | 'desc',
+        search: string,
+        userId: number,
+    ): Promise<getProfileDto[]> {
+        const subscribersIds = await this.userSubscriberModel
+            .findAll({
+                where: {
+                    subscriptionId: userId,
+                },
+                include: [{ model: User, as: 'subscriber' }],
+            })
+            .then((data) => data.map((sub) => sub.subscriberId));
+
+        const subscribers = await this.userModel
+            .scope('withoutPassword')
+            .findAll<User>({
+                where: {
+                    username: {
+                        [Op.iLike]: '%' + search + '%',
+                    },
+                    id: subscribersIds,
+                },
+                order: [[sort, order]],
+            });
+
+        const subscribersWithSubInfo = await Promise.all(
+            subscribers.map(async (subscriber) => {
+                const subscribeRelation =
+                    await this.userSubscriberModel.findOne({
+                        where: {
+                            subscriberId: userId,
+                            subscriptionId: subscriber.id,
+                        },
+                    });
+                const amISubscribed = Boolean(subscribeRelation);
+                return new getProfileDto(subscriber, amISubscribed);
+            }),
+        );
+
+        return subscribersWithSubInfo;
+    }
+
+    async findOne(username: string, userId?: number): Promise<getProfileDto> {
+        const user = await this.userModel
+            .scope('withoutPassword')
+            .findOne<User>({
+                include: [
+                    {
+                        model: UserSubscriber,
+                        as: 'subscribers',
+                    },
+                    {
+                        model: UserSubscriber,
+                        as: 'subscriptions',
+                    },
+                ],
+                where: { username },
+            });
+
+        if (!userId) {
+            return new getProfileDto(user);
+        }
+
         const subscribeRelation = await this.userSubscriberModel.findOne({
-          where: {
-            subscriberId: userId,
-            subscriptionId: user.id,
-          },
+            where: {
+                subscriberId: userId,
+                subscriptionId: user.id,
+            },
         });
         const amISubscribed = Boolean(subscribeRelation);
         return new getProfileDto(user, amISubscribed);
-      }),
-    );
-
-    return usersWithSubInfo;
-  }
-
-  async getSubscriptions(
-    sort: 'rating' | 'createdAt' | 'username',
-    order: 'asc' | 'desc',
-    search: string,
-    userId: number,
-  ): Promise<getProfileDto[]> {
-    const subscriptions = await this.userSubscriberModel
-      .findAll({
-        where: {
-          subscriberId: userId,
-        },
-        include: [{ model: User, as: 'subscribtion' }],
-      })
-      .then((data) => data.map((sub) => sub.subscriptionId));
-
-    return this.userModel
-      .scope('withoutPassword')
-      .findAll<User>({
-        where: {
-          username: {
-            [Op.iLike]: '%' + search + '%',
-          },
-          id: subscriptions,
-        },
-        order: [[sort, order]],
-      })
-      .then((data) => data.map((user) => new getProfileDto(user, true)));
-  }
-
-  async getSubscribers(
-    sort: 'rating' | 'createdAt' | 'username',
-    order: 'asc' | 'desc',
-    search: string,
-    userId: number,
-  ): Promise<getProfileDto[]> {
-    const subscribersIds = await this.userSubscriberModel
-      .findAll({
-        where: {
-          subscriptionId: userId,
-        },
-        include: [{ model: User, as: 'subscriber' }],
-      })
-      .then((data) => data.map((sub) => sub.subscriberId));
-
-    const subscribers = await this.userModel
-      .scope('withoutPassword')
-      .findAll<User>({
-        where: {
-          username: {
-            [Op.iLike]: '%' + search + '%',
-          },
-          id: subscribersIds,
-        },
-        order: [[sort, order]],
-      });
-
-    const subscribersWithSubInfo = await Promise.all(
-      subscribers.map(async (subscriber) => {
-        const subscribeRelation = await this.userSubscriberModel.findOne({
-          where: {
-            subscriberId: userId,
-            subscriptionId: subscriber.id,
-          },
-        });
-        const amISubscribed = Boolean(subscribeRelation);
-        return new getProfileDto(subscriber, amISubscribed);
-      }),
-    );
-
-    return subscribersWithSubInfo;
-  }
-
-  async findOne(username: string, userId?: number): Promise<getProfileDto> {
-    const user = await this.userModel.scope('withoutPassword').findOne<User>({
-      where: { username },
-    });
-
-    if (!userId) {
-      return new getProfileDto(user);
     }
-
-    const subscribeRelation = await this.userSubscriberModel.findOne({
-      where: {
-        subscriberId: userId,
-        subscriptionId: user.id,
-      },
-    });
-    const amISubscribed = Boolean(subscribeRelation);
-    return new getProfileDto(user, amISubscribed);
-  }
 }

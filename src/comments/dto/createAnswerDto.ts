@@ -1,5 +1,5 @@
 export interface CreateAnswerDto {
-  text: string;
-  userId: number;
-  commentId: number;
+    text: string;
+    userId: number;
+    commentId: number;
 }

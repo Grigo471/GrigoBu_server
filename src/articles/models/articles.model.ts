@@ -1,58 +1,58 @@
 import {
-  Table,
-  Column,
-  Model,
-  HasMany,
-  ForeignKey,
-  BelongsToMany,
-  BelongsTo,
+    Table,
+    Column,
+    Model,
+    HasMany,
+    ForeignKey,
+    BelongsToMany,
+    BelongsTo,
 } from 'sequelize-typescript';
 import { User } from 'src/users/models/users.model';
 import { CommentModel } from 'src/comments';
 import { ArticleTag, Tag } from './articleTags.model';
 import {
-  ArticleTextBlock,
-  ArticleImageBlock,
-  ArticleCodeBlock,
+    ArticleTextBlock,
+    ArticleImageBlock,
+    ArticleCodeBlock,
 } from './articleBlocks.model';
 import { ArticleRate } from './articleRate.model';
 
 @Table
 export class Article extends Model {
-  @Column
-  title: string;
+    @Column
+    title: string;
 
-  @Column
-  subtitle: string;
+    @Column
+    subtitle: string;
 
-  @Column
-  views: number;
+    @Column
+    views: number;
 
-  @Column
-  rating: number;
+    @Column
+    rating: number;
 
-  @HasMany(() => ArticleRate)
-  rates: ArticleRate[];
+    @HasMany(() => ArticleRate)
+    rates: ArticleRate[];
 
-  @BelongsToMany(() => Tag, () => ArticleTag)
-  tags: Tag[];
+    @BelongsToMany(() => Tag, () => ArticleTag)
+    tags: Tag[];
 
-  @HasMany(() => ArticleTextBlock)
-  textBlocks: ArticleTextBlock[];
+    @HasMany(() => ArticleTextBlock)
+    textBlocks: ArticleTextBlock[];
 
-  @HasMany(() => ArticleImageBlock)
-  imageBlocks: ArticleImageBlock[];
+    @HasMany(() => ArticleImageBlock)
+    imageBlocks: ArticleImageBlock[];
 
-  @HasMany(() => ArticleCodeBlock)
-  codeBlocks: ArticleCodeBlock[];
+    @HasMany(() => ArticleCodeBlock)
+    codeBlocks: ArticleCodeBlock[];
 
-  @HasMany(() => CommentModel)
-  comments: CommentModel[];
+    @HasMany(() => CommentModel)
+    comments: CommentModel[];
 
-  @ForeignKey(() => User)
-  @Column
-  userId: number;
+    @ForeignKey(() => User)
+    @Column
+    userId: number;
 
-  @BelongsTo(() => User)
-  user: User;
+    @BelongsTo(() => User)
+    user: User;
 }
