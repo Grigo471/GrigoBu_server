@@ -7,6 +7,7 @@ import * as path from 'path';
 import { UsersModule } from './users/users.module';
 import { CommentsModule } from './comments/comments.module';
 import { ConfigModule } from '@nestjs/config';
+import { NotificationsModule } from './notifications/notifications.module';
 
 @Module({
     imports: [
@@ -31,6 +32,7 @@ import { ConfigModule } from '@nestjs/config';
         CommentsModule,
         UsersModule,
         FileModule,
+        NotificationsModule,
     ],
 })
 export class AppModule {}

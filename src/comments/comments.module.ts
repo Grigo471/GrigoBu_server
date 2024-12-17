@@ -8,6 +8,6 @@ import { Answer } from './models/answers.model';
 @Module({
     imports: [SequelizeModule.forFeature([CommentModel, Answer])],
     controllers: [CommentsController],
-    providers: [CommentsService]
+    providers: [CommentsService],
 })
 export class CommentsModule {}

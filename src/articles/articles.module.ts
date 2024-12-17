@@ -22,6 +22,7 @@ import { ArticleRate } from './models/articleRate.model';
 import { UsersModule } from 'src/users/users.module';
 import { User } from 'src/users';
 import { UserSubscriber } from 'src/users/models/users.model';
+import { NotificationsModule } from 'src/notifications/notifications.module';
 
 @Module({
     imports: [
@@ -37,6 +38,7 @@ import { UserSubscriber } from 'src/users/models/users.model';
             UserSubscriber,
         ]),
         UsersModule,
+        NotificationsModule,
     ],
     controllers: [ArticlesController, TagsController],
     providers: [ArticlesService, FileService],

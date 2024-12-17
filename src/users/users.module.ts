@@ -1,4 +1,5 @@
 import {
+    forwardRef,
     MiddlewareConsumer,
     Module,
     NestModule,
@@ -15,18 +16,13 @@ import { Token } from './models/token.model';
 import { FileService } from 'src/file';
 import { UserSettings } from './models/userSettings';
 import { AuthMiddleware } from 'src/middlewares/authMiddleware';
-import { Notification } from './models/notification.model';
 import { OptionalAuthMiddleware } from 'src/middlewares/optionalAuthMiddleware';
+import { NotificationsModule } from 'src/notifications/notifications.module';
 
 @Module({
     imports: [
-        SequelizeModule.forFeature([
-            User,
-            UserSubscriber,
-            Token,
-            UserSettings,
-            Notification,
-        ]),
+        SequelizeModule.forFeature([User, UserSubscriber, Token, UserSettings]),
+        forwardRef(() => NotificationsModule),
     ],
     exports: [TokenService],
     controllers: [UsersController, AuthController],

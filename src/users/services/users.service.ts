@@ -3,8 +3,8 @@ import { User, UserSubscriber } from '../models/users.model';
 import { InjectModel } from '@nestjs/sequelize';
 import { getProfileDto, UserDto } from '../dto/UserDto';
 import { FileService } from 'src/file';
-import { Notification } from '../models/notification.model';
 import { Op } from 'sequelize';
+import { NotificationsService } from 'src/notifications/services/notifications.service';
 
 @Injectable()
 export class UsersService {
@@ -15,8 +15,7 @@ export class UsersService {
         @InjectModel(UserSubscriber)
         private userSubscriberModel: typeof UserSubscriber,
 
-        @InjectModel(Notification)
-        private notificationModel: typeof Notification,
+        private notificationsService: NotificationsService,
         private fileService: FileService,
     ) {}
 
@@ -61,17 +60,18 @@ export class UsersService {
             subscriberId,
             subscriptionId,
         });
-        // const subscribers = await this.userModel.findAll({
-        //   where: { subscriptionId },
-        // });
 
-        // if (subscribers.length === 1 || subscribers.length % 5 === 0) {
-        //   await this.notificationModel.create({
-        //     userId: subscriptionId,
-        //     type: 'subscribe',
-        //     value: subscribers.length,
-        //   });
-        // }
+        const subscribers = await this.userModel.count({
+            where: { id: subscriptionId },
+        });
+
+        if (subscribers === 1 || subscribers % 5 === 0) {
+            await this.notificationsService.createNotifications({
+                userId: subscriptionId,
+                type: 'subscribers',
+                value: subscribers,
+            });
+        }
 
         return subscriptionId;
     }
@@ -82,21 +82,6 @@ export class UsersService {
         });
 
         return subscriptionId;
-    }
-
-    async viewNotifications(userId: number) {
-        const notifications = await this.notificationModel.findAll({
-            where: { userId },
-        });
-
-        await notifications.forEach(async (notification) => {
-            if (notification.isSeen === false) {
-                notification.isSeen = true;
-                await notification.save();
-            }
-        });
-
-        return notifications;
     }
 
     async findAll(

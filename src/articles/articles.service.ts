@@ -16,6 +16,7 @@ import { CommentModel } from 'src/comments';
 import { Op } from 'sequelize';
 import { UserSubscriber } from 'src/users/models/users.model';
 import { getProfileDto } from 'src/users/dto/UserDto';
+import { NotificationsService } from 'src/notifications/services/notifications.service';
 
 @Injectable()
 export class ArticlesService {
@@ -39,6 +40,7 @@ export class ArticlesService {
         @InjectModel(ArticleCodeBlock)
         private articleCodeBlockModel: typeof ArticleCodeBlock,
         private fileService: FileService,
+        private notificationsService: NotificationsService,
     ) {}
 
     async create(
@@ -435,6 +437,14 @@ export class ArticlesService {
                 user.rating += 1;
                 myRate.value = 0;
             }
+        }
+
+        if (user.rating % 5 === 0) {
+            await this.notificationsService.createNotifications({
+                userId: user.id,
+                value: user.rating,
+                type: 'rating',
+            });
         }
 
         await article.save();

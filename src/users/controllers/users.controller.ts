@@ -16,7 +16,6 @@ import { User } from '../models/users.model';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { getProfileDto, UserDto } from '../dto/UserDto';
 import { AuthRequest } from 'src/middlewares/authMiddleware';
-import { Notification } from '../models/notification.model';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 
 @Controller('/users')
@@ -54,11 +53,6 @@ export class UsersController {
         @Req() req: AuthRequest,
     ): Promise<number> {
         return this.usersService.unsubscribe(id, req.userId);
-    }
-
-    @Post('/notifications')
-    viewNotifications(@Req() req: AuthRequest): Promise<Notification[]> {
-        return this.usersService.viewNotifications(req.userId);
     }
 
     @ApiOperation({
