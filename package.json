@@ -21,7 +21,7 @@
     "prepare": "husky"
   },
   "lint-staged": {
-    "src/**/*.ts": "eslint"
+    "*.ts": "eslint --fix"
   },
   "dependencies": {
     "@nestjs/common": "^10.0.0",
