@@ -1,0 +1,35 @@
+services: 
+
+  server-prod:
+    container_name: server-prod
+    build: 
+      context: ./
+    env_file:
+      - .production.env
+    ports: 
+      - 5000:5000
+      - 9229:9229
+    command: node dist/main
+    depends_on:
+      - postgres
+    volumes: 
+      - ./static:/var/lib/static
+    restart: always
+
+  postgres: 
+    container_name: postgres
+    image: postgres:12
+    env_file:
+      - .production.env
+    environment:
+      PG_DATA: /var/lib/postgresql/data
+    ports:
+      - 5432:5432
+    volumes: 
+      - ./pgdata:/var/lib/postgresql/data
+    restart: always
+
+volumes:
+  pgdata:
+
+  static:

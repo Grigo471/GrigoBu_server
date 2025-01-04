@@ -56,7 +56,7 @@ export class User extends Model<User, UserCreationAttributes> {
         description:
             'Рейтинг пользователя, является суммой оценок, которые поставили его статьям другие пользователи',
     })
-    @Column({ type: DataType.NUMBER, defaultValue: 0 })
+    @Column({ type: DataType.INTEGER, defaultValue: 0 })
     rating: number;
 
     @ApiProperty({

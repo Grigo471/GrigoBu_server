@@ -12,7 +12,9 @@ import { NotificationsModule } from './notifications/notifications.module';
 @Module({
     imports: [
         ConfigModule.forRoot({
-            envFilePath: `.${process.env.NODE_ENV}.env`,
+            envFilePath: process.env.NODE_ENV
+                ? `.${process.env.NODE_ENV}.env`
+                : '.production.env',
         }),
         ServeStaticModule.forRoot({
             rootPath: path.resolve(__dirname, '..', 'static'),

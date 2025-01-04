@@ -65,13 +65,23 @@ export class UsersService {
             where: { id: subscriptionId },
         });
 
+        const subscriber = await this.userModel.findOne({
+            where: { id: subscriberId },
+        });
+
         if (subscribers === 1 || subscribers % 5 === 0) {
             await this.notificationsService.createNotifications({
                 userId: subscriptionId,
-                type: 'subscribers',
+                type: 'subsNumber',
                 value: subscribers,
             });
         }
+
+        await this.notificationsService.createNotifications({
+            userId: subscriptionId,
+            type: 'smbSubscribed',
+            name: subscriber.username,
+        });
 
         return subscriptionId;
     }

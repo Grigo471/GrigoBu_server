@@ -1,1 +1,6 @@
-export type NotificationType = 'comment' | 'answer' | 'rating' | 'subscribers';
+export type NotificationType =
+    | 'smbCommented'
+    | 'smbAnswered'
+    | 'rating'
+    | 'subsNumber'
+    | 'smbSubscribed';
