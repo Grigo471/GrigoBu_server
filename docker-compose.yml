@@ -12,8 +12,6 @@ services:
     command: node dist/main
     depends_on:
       - db
-    volumes: 
-      - ./static:/var/lib/static
     restart: always
 
   db: 
@@ -25,11 +23,9 @@ services:
       PG_DATA: /var/lib/postgresql/data
     ports:
       - 5432:5432
-    volumes: 
-      - ./pgdata:/var/lib/postgresql/data
+    # volumes: 
+    #   - ./pgdata:/var/lib/postgresql/data
     restart: always
 
-volumes:
-  pgdata:
-
-  static:
+# volumes:
+#   pgdata:
