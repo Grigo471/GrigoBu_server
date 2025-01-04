@@ -1,9 +1,10 @@
 services: 
 
-  server-prod:
-    container_name: server-prod
+  griboo-server-prod:
+    container_name: griboo-server-prod
     build: 
       context: ./
+    image: grigo471/griboo-server-prod:latest
     env_file:
       - .production.env
     ports: 
@@ -11,13 +12,13 @@ services:
       - 9229:9229
     command: node dist/main
     depends_on:
-      - postgres
+      - griboo-postgres
     volumes: 
       - ./static:/var/lib/static
     restart: always
 
-  postgres: 
-    container_name: postgres
+  griboo-postgres: 
+    container_name: griboo-postgres
     image: postgres:12
     env_file:
       - .production.env
