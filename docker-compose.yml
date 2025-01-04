@@ -11,13 +11,13 @@ services:
       - 9229:9229
     command: node dist/main
     depends_on:
-      - postgres
+      - db
     volumes: 
       - ./static:/var/lib/static
     restart: always
 
-  postgres: 
-    container_name: postgres
+  db: 
+    container_name: db
     image: postgres:12
     env_file:
       - .production.env
