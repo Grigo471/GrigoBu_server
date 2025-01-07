@@ -9,7 +9,10 @@ async function start() {
     const PORT = process.env.PORT || 5000;
     const app = await NestFactory.create(AppModule);
     app.enableCors({
-        origin: process.env.CLIENT_URL,
+        origin:
+            process.env.NODE_ENV === 'development'
+                ? process.env.CLIENT_URL
+                : new RegExp(process.env.CLIENT_URL),
         methods: ['GET', 'PATCH', 'POST', 'DELETE'],
         credentials: true,
     });
