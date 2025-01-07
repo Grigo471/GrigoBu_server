@@ -9,15 +9,18 @@ import { CommentsModule } from './comments/comments.module';
 import { ConfigModule } from '@nestjs/config';
 import { NotificationsModule } from './notifications/notifications.module';
 
+const staticDirPath =
+    process.env.NODE_ENV === 'development'
+        ? path.resolve(__dirname, '..', 'static')
+        : path.resolve(__dirname, 'dist', 'static');
+
 @Module({
     imports: [
         ConfigModule.forRoot({
-            envFilePath: process.env.NODE_ENV
-                ? `.${process.env.NODE_ENV}.env`
-                : '.production.env',
+            envFilePath: process.env.NODE_ENV,
         }),
         ServeStaticModule.forRoot({
-            rootPath: path.resolve(__dirname, '..', 'static'),
+            rootPath: staticDirPath,
         }),
         SequelizeModule.forRoot({
             dialect: 'postgres',
