@@ -12,7 +12,7 @@ import { NotificationsModule } from './notifications/notifications.module';
 const staticDirPath =
     process.env.NODE_ENV === 'development'
         ? path.resolve(__dirname, '..', 'static')
-        : path.resolve(__dirname, 'dist', 'static');
+        : path.resolve(__dirname, 'static');
 
 @Module({
     imports: [
