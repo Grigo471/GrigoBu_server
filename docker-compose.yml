@@ -10,7 +10,7 @@ services:
       - 5000:5000
       - 9229:9229
     volumes: 
-      - ./pgdata:/usr/local/app/dist/static
+      - ./static:/usr/local/app/dist/static
     command: node dist/main
     depends_on:
       - db
@@ -31,3 +31,5 @@ services:
 
 volumes:
   pgdata:
+
+  static:
