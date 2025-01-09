@@ -4,6 +4,9 @@
 /static
 /pgdata
 
+# secrets
+/secrets
+
 # Logs
 logs
 *.log
