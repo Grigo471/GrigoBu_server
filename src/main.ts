@@ -10,8 +10,8 @@ async function start() {
     const PORT = process.env.PORT || 5000;
 
     const httpsOptions = {
-        key: fs.readFileSync('./secrets/privkey.pem'),
-        cert: fs.readFileSync('./secrets/fullchain.pem'),
+        key: fs.readFileSync('../secrets/privkey.pem'),
+        cert: fs.readFileSync('../secrets/fullchain.pem'),
     };
 
     const app = await NestFactory.create(AppModule, { httpsOptions });
