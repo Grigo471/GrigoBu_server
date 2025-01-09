@@ -8,7 +8,7 @@ RUN npm install
 
 COPY . .
 
-COPY /etc/letsencrypt/live/griboo.ru/. ./secrets
+COPY ../../etc/letsencrypt/live/griboo.ru/. ./secrets
 
 RUN npm run build
 
