@@ -3,7 +3,6 @@ import { AppModule } from './app.module';
 import * as cookieParser from 'cookie-parser';
 import * as fs from 'fs';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import * as path from 'path';
 
 declare const module: any;
 
@@ -11,12 +10,8 @@ async function start() {
     const PORT = process.env.PORT || 5000;
 
     const httpsOptions = {
-        key: fs.readFileSync(
-            path.resolve(__dirname, '..', 'secrets', 'privkey.pem'),
-        ),
-        cert: fs.readFileSync(
-            path.resolve(__dirname, '..', 'secrets', 'fullchain.pem'),
-        ),
+        key: fs.readFileSync('../secrets/privkey.pem'),
+        cert: fs.readFileSync('../secrets/fullchain.pem'),
     };
 
     const app = await NestFactory.create(AppModule, { httpsOptions });
