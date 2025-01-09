@@ -8,6 +8,8 @@ RUN npm install
 
 COPY . .
 
+COPY secrets ./secrets
+
 RUN npm run build
 
 EXPOSE 5000
