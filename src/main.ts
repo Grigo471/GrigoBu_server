@@ -3,7 +3,7 @@ import { AppModule } from './app.module';
 import * as cookieParser from 'cookie-parser';
 import * as fs from 'fs';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import path from 'path';
+import * as path from 'path';
 
 declare const module: any;
 
