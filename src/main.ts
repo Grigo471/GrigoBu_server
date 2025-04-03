@@ -9,23 +9,25 @@ declare const module: any;
 
 async function start() {
     const PORT = process.env.PORT || 5000;
+    const isDev = process.env.NODE_ENV === 'development';
 
-    const httpsOptions = {
-        key: fs.readFileSync(
-            path.resolve(__dirname, '..', 'secrets', 'privkey.pem'),
-        ),
-        cert: fs.readFileSync(
-            path.resolve(__dirname, '..', 'secrets', 'fullchain.pem'),
-        ),
-    };
+    const httpsOptions = isDev
+        ? undefined
+        : {
+              key: fs.readFileSync(
+                  path.resolve(__dirname, '..', 'secrets', 'privkey.pem'),
+              ),
+              cert: fs.readFileSync(
+                  path.resolve(__dirname, '..', 'secrets', 'fullchain.pem'),
+              ),
+          };
 
     const app = await NestFactory.create(AppModule, { httpsOptions });
 
     app.enableCors({
-        origin:
-            process.env.NODE_ENV === 'development'
-                ? process.env.CLIENT_URL
-                : new RegExp(process.env.CLIENT_URL),
+        origin: isDev
+            ? process.env.CLIENT_URL
+            : new RegExp(process.env.CLIENT_URL),
         methods: ['GET', 'PATCH', 'POST', 'DELETE'],
         credentials: true,
     });

@@ -17,7 +17,7 @@ const staticDirPath =
 @Module({
     imports: [
         ConfigModule.forRoot({
-            envFilePath: process.env.NODE_ENV,
+            envFilePath: `.${process.env.NODE_ENV}.env`,
         }),
         ServeStaticModule.forRoot({
             rootPath: staticDirPath,

@@ -317,34 +317,32 @@ export class ArticlesService {
         search: string,
         username: string,
     ): Promise<ArticleDto[]> {
-        const user = await this.userModel.findOne<User>({
+        const articles = await this.articleModel.findAll<Article>({
             include: [
+                Tag,
+                ArticleCodeBlock,
+                ArticleTextBlock,
+                ArticleImageBlock,
                 {
-                    model: Article,
-                    include: [
-                        Tag,
-                        ArticleCodeBlock,
-                        ArticleTextBlock,
-                        ArticleImageBlock,
-                        User,
-                        CommentModel,
-                    ],
+                    model: User,
                     where: {
-                        title: {
-                            [Op.iLike]: '%' + search + '%',
-                        },
+                        username,
                     },
-                    limit,
-                    // @ts-expect-error: No offset property in Typescript, but it works
-                    offset: (page - 1) * limit,
-                    order: [[sort, order]],
                 },
+                CommentModel,
             ],
-            where: { username },
+            where: {
+                title: {
+                    [Op.iLike]: '%' + search + '%',
+                },
+            },
+            limit,
+            offset: (page - 1) * limit,
+            order: [[sort, order]],
         });
 
         const articlesWithBlocks = await Promise.all(
-            user.articles.map((article) =>
+            articles.map((article) =>
                 this.getArticleWithBlocks(article, userId),
             ),
         );
