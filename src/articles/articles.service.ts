@@ -10,7 +10,7 @@ import {
     ArticleImageBlock,
 } from './models/articleBlocks.model';
 import { User } from 'src/users';
-import { ArticleDto, RateAticleResult } from './types/types';
+import { ArticleBlock, ArticleDto, RateAticleResult } from './types/types';
 import { ArticleRate } from './models/articleRate.model';
 import { CommentModel } from 'src/comments';
 import { Op } from 'sequelize';
@@ -43,7 +43,62 @@ export class ArticlesService {
         private notificationsService: NotificationsService,
     ) {}
 
-    async create(
+    private async createTags(tags: string[], articleId: string) {
+        const createdTags = await Promise.all(
+            tags.map((tag) => {
+                const res = this.tagModel
+                    .findOrCreate({ where: { tag } })
+                    .then((t) => t[0]);
+                return res;
+            }),
+        );
+
+        await createdTags.forEach((tag) => {
+            this.articleTagModel.create({
+                tagId: tag.id,
+                articleId: articleId,
+            });
+        });
+    }
+
+    private async createBlocks(blocks: ArticleBlock[], articleId: string) {
+        await blocks.forEach(async (block, index) => {
+            switch (block.type) {
+                case 'text':
+                    await this.articleTextBlockModel.create({
+                        type: block.type,
+                        title: block.title,
+                        index: index,
+                        paragraphs: block.paragraphs,
+                        articleId: articleId,
+                    });
+                    break;
+                case 'image':
+                    await this.articleImageBlockModel.create({
+                        type: block.type,
+                        title: block.title,
+                        index: index,
+                        src: block.src,
+                        articleId: articleId,
+                    });
+                    break;
+                case 'code':
+                    await this.articleCodeBlockModel.create({
+                        type: block.type,
+                        title: block.title,
+                        index: index,
+                        code: block.code,
+                        articleId: articleId,
+                    });
+                    break;
+                default:
+                    console.log('Could not create blocks');
+                    break;
+            }
+        });
+    }
+
+    async createArticle(
         dto: CreateArticleDto,
         images: Express.Multer.File[],
     ): Promise<Article> {
@@ -70,58 +125,107 @@ export class ArticlesService {
                 userId: dto.userId,
             });
 
-            const tags = await Promise.all(
-                dto.tags.map((tag) => {
-                    const res = this.tagModel
-                        .findOrCreate({ where: { tag } })
-                        .then((t) => t[0]);
-                    return res;
-                }),
-            );
+            await this.createTags(dto.tags, article.id);
 
-            await tags.forEach((tag) => {
-                this.articleTagModel.create({
-                    tagId: tag.id,
-                    articleId: article.id,
-                });
+            await this.createBlocks(dto.blocks, article.id);
+
+            return article;
+        } catch (error) {
+            console.log(error);
+        }
+    }
+
+    private async deleteBlocksAndTags(articleId: string) {
+        await this.articleTagModel.destroy({
+            where: {
+                articleId: articleId,
+            },
+        });
+
+        await this.articleTextBlockModel.destroy({
+            where: {
+                articleId: articleId,
+            },
+        });
+
+        await this.articleCodeBlockModel.destroy({
+            where: {
+                articleId: articleId,
+            },
+        });
+
+        await this.articleImageBlockModel.destroy({
+            where: {
+                articleId: articleId,
+            },
+        });
+    }
+
+    async editArticle(
+        id: string,
+        userId: number,
+        dto: CreateArticleDto,
+        images: Express.Multer.File[],
+    ): Promise<Article> {
+        try {
+            const article = await this.articleModel.findByPk(id, {
+                include: [User],
             });
 
-            await dto.blocks.forEach((block, index) => {
-                switch (block.type) {
-                    case 'text':
-                        this.articleTextBlockModel.create({
-                            type: block.type,
-                            title: block.title,
-                            index: index,
-                            paragraphs: block.paragraphs,
-                            articleId: article.id,
-                        });
-                        break;
-                    case 'image':
-                        this.articleImageBlockModel.create({
-                            type: block.type,
-                            title: block.title,
-                            index: index,
-                            src: block.src,
-                            articleId: article.id,
-                        });
-                        break;
-                    case 'code':
-                        this.articleCodeBlockModel.create({
-                            type: block.type,
-                            title: block.title,
-                            index: index,
-                            code: block.code,
-                            articleId: article.id,
-                        });
-                        break;
-                    default:
-                        console.log('shiit');
-                        break;
+            article.title = dto.title;
+            await article.save();
+
+            if (article.userId !== userId && article.user.role === 'user') {
+                throw new HttpException(
+                    'Not a creator or moderator',
+                    HttpStatus.UNAUTHORIZED,
+                );
+            }
+
+            dto.blocks.forEach((block) => {
+                if (block.type === 'image' && block.src.startsWith('blob:')) {
+                    images.forEach((image) => {
+                        if (
+                            image.originalname.split('.')[0] ===
+                            block.src.split('/').pop()
+                        ) {
+                            const src = this.fileService.createFile(image);
+                            block.src = src;
+                        }
+                    });
                 }
             });
 
+            await this.deleteBlocksAndTags(article.id);
+
+            await this.createTags(dto.tags, article.id);
+
+            await this.createBlocks(dto.blocks, article.id);
+
             return article;
+        } catch (error) {
+            console.log(error);
+        }
+    }
+
+    async deleteArticle(id: string, userId: number): Promise<Article> {
+        try {
+            const article = await this.articleModel.findByPk(id, {
+                include: [User],
+            });
+
+            if (article.userId !== userId && article.user.role === 'user') {
+                throw new HttpException(
+                    'Not a creator or moderator',
+                    HttpStatus.UNAUTHORIZED,
+                );
+            }
+
+            await this.deleteBlocksAndTags(id);
+
+            await article.destroy();
+
+            return article.id;
         } catch (error) {
             console.log(error);
         }

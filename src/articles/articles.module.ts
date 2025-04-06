@@ -49,6 +49,8 @@ export class ArticlesModule implements NestModule {
             .apply(AuthMiddleware)
             .forRoutes(
                 { path: 'articles', method: RequestMethod.POST },
+                { path: 'articles/:id', method: RequestMethod.PATCH },
+                { path: 'articles/:id', method: RequestMethod.DELETE },
                 { path: 'articles/subscriptions', method: RequestMethod.GET },
                 { path: 'articles/:id/rate', method: RequestMethod.POST },
                 { path: 'articles/myRate', method: RequestMethod.GET },

@@ -1,8 +1,10 @@
 import {
     Body,
     Controller,
+    Delete,
     Get,
     Param,
+    Patch,
     Post,
     Query,
     Req,
@@ -22,7 +24,23 @@ export class ArticlesController {
     @Post()
     @UseInterceptors(FilesInterceptor('images'))
     postArticle(@Body() dto: CreateArticleDto, @UploadedFiles() images) {
-        return this.articlesService.create(dto, images);
+        return this.articlesService.createArticle(dto, images);
+    }
+
+    @Patch(':id')
+    @UseInterceptors(FilesInterceptor('images'))
+    editArticle(
+        @Param('id') id: string,
+        @Body() dto: CreateArticleDto,
+        @UploadedFiles() images,
+        @Req() req: AuthRequest,
+    ) {
+        return this.articlesService.editArticle(id, req.userId, dto, images);
+    }
+
+    @Delete(':id')
+    deleteArticle(@Param('id') id: string, @Req() req: AuthRequest) {
+        return this.articlesService.deleteArticle(id, req.userId);
     }
 
     @Get()

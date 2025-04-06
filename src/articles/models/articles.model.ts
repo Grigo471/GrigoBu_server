@@ -23,9 +23,6 @@ export class Article extends Model {
     title: string;
 
     @Column
-    subtitle: string;
-
-    @Column
     views: number;
 
     @Column
