@@ -1,6 +1,7 @@
 import {
     BelongsTo,
     Column,
+    DataType,
     ForeignKey,
     HasMany,
     Model,
@@ -12,7 +13,7 @@ import { Article } from 'src/articles';
 
 @Table
 export class CommentModel extends Model {
-    @Column
+    @Column(DataType.STRING(10000))
     text: string;
 
     @ForeignKey(() => User)
