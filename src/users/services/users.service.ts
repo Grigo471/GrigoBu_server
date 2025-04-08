@@ -61,8 +61,8 @@ export class UsersService {
             subscriptionId,
         });
 
-        const subscribers = await this.userModel.count({
-            where: { id: subscriptionId },
+        const subscribers = await this.userSubscriberModel.count({
+            where: { subscriptionId },
         });
 
         const subscriber = await this.userModel.findOne({
@@ -108,24 +108,21 @@ export class UsersService {
                         [Op.iLike]: '%' + search + '%',
                     },
                 },
+                include: [
+                    { model: UserSubscriber, as: 'subscriptions' },
+                    { model: UserSubscriber, as: 'subscribers' },
+                ],
                 order: [[sort, order]],
             });
 
         if (!userId) return users.map((user) => new getProfileDto(user));
 
-        const usersWithSubInfo = await Promise.all(
-            users.map(async (user) => {
-                const subscribeRelation =
-                    await this.userSubscriberModel.findOne({
-                        where: {
-                            subscriberId: userId,
-                            subscriptionId: user.id,
-                        },
-                    });
-                const amISubscribed = Boolean(subscribeRelation);
-                return new getProfileDto(user, amISubscribed);
-            }),
-        );
+        const usersWithSubInfo = users.map((user) => {
+            const amISubscribed = user.subscribers.some(
+                (sub) => sub.subscriberId === userId,
+            );
+            return new getProfileDto(user, amISubscribed);
+        });
 
         return usersWithSubInfo;
     }
@@ -136,27 +133,51 @@ export class UsersService {
         search: string,
         userId: number,
     ): Promise<getProfileDto[]> {
-        const subscriptions = await this.userSubscriberModel
-            .findAll({
-                where: {
-                    subscriberId: userId,
-                },
-                include: [{ model: User, as: 'subscription' }],
-            })
-            .then((data) => data.map((sub) => sub.subscriptionId));
-
-        return this.userModel
+        const subscriptions = await this.userModel
             .scope('withoutPassword')
-            .findAll<User>({
-                where: {
-                    username: {
-                        [Op.iLike]: '%' + search + '%',
+            .findByPk(userId, {
+                include: [
+                    {
+                        model: UserSubscriber,
+                        as: 'subscriptions',
+                        include: [
+                            {
+                                model: User,
+                                as: 'subscription',
+                                where: {
+                                    username: {
+                                        [Op.iLike]: '%' + search + '%',
+                                    },
+                                },
+                                include: [
+                                    {
+                                        model: UserSubscriber,
+                                        as: 'subscriptions',
+                                    },
+                                    {
+                                        model: UserSubscriber,
+                                        as: 'subscribers',
+                                    },
+                                ],
+                            },
+                        ],
                     },
-                    id: subscriptions,
-                },
-                order: [[sort, order]],
+                ],
+                order: [
+                    [
+                        { model: UserSubscriber, as: 'subscriptions' },
+                        { model: User, as: 'subscription' },
+                        sort,
+                        order,
+                    ],
+                ],
             })
-            .then((data) => data.map((user) => new getProfileDto(user, true)));
+            .then((user) =>
+                user.subscriptions.map(
+                    (sub) => new getProfileDto(sub.subscription, true),
+                ),
+            );
+        return subscriptions;
     }
 
     async getSubscribers(
@@ -165,40 +186,36 @@ export class UsersService {
         search: string,
         userId: number,
     ): Promise<getProfileDto[]> {
-        const subscribersIds = await this.userSubscriberModel
+        const subscribers = await this.userSubscriberModel
             .findAll({
                 where: {
                     subscriptionId: userId,
                 },
-                include: [{ model: User, as: 'subscriber' }],
-            })
-            .then((data) => data.map((sub) => sub.subscriberId));
-
-        const subscribers = await this.userModel
-            .scope('withoutPassword')
-            .findAll<User>({
-                where: {
-                    username: {
-                        [Op.iLike]: '%' + search + '%',
-                    },
-                    id: subscribersIds,
-                },
-                order: [[sort, order]],
-            });
-
-        const subscribersWithSubInfo = await Promise.all(
-            subscribers.map(async (subscriber) => {
-                const subscribeRelation =
-                    await this.userSubscriberModel.findOne({
+                include: [
+                    {
+                        model: User,
+                        as: 'subscriber',
                         where: {
-                            subscriberId: userId,
-                            subscriptionId: subscriber.id,
+                            username: {
+                                [Op.iLike]: '%' + search + '%',
+                            },
                         },
-                    });
-                const amISubscribed = Boolean(subscribeRelation);
-                return new getProfileDto(subscriber, amISubscribed);
-            }),
-        );
+                        include: [
+                            { model: UserSubscriber, as: 'subscriptions' },
+                            { model: UserSubscriber, as: 'subscribers' },
+                        ],
+                    },
+                ],
+                order: [[{ model: User, as: 'subscriber' }, sort, order]],
+            })
+            .then((data) => data.map((sub) => sub.subscriber));
+
+        const subscribersWithSubInfo = subscribers.map((subscriber) => {
+            const amISubscribed = subscriber.subscribers.some(
+                (sub) => sub.subscriberId === userId,
+            );
+            return new getProfileDto(subscriber, amISubscribed);
+        });
 
         return subscribersWithSubInfo;
     }
@@ -220,17 +237,13 @@ export class UsersService {
                 where: { username },
             });
 
-        if (!userId) {
+        if (!userId || userId === user.id) {
             return new getProfileDto(user);
         }
 
-        const subscribeRelation = await this.userSubscriberModel.findOne({
-            where: {
-                subscriberId: userId,
-                subscriptionId: user.id,
-            },
-        });
-        const amISubscribed = Boolean(subscribeRelation);
+        const amISubscribed = user.subscribers.some(
+            (sub) => sub.subscriberId === userId,
+        );
         return new getProfileDto(user, amISubscribed);
     }
 }

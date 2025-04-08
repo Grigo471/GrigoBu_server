@@ -101,13 +101,13 @@ export class User extends Model<User, UserCreationAttributes> {
         description: 'Подписчики пользователя',
     })
     @HasMany(() => UserSubscriber, 'subscriptionId')
-    subscribers: User[];
+    subscribers: UserSubscriber[];
 
     @ApiProperty({
         description: 'Пользователи, на которых подписан данный пользователь',
     })
     @HasMany(() => UserSubscriber, 'subscriberId')
-    subscriptions: User[];
+    subscriptions: UserSubscriber[];
 }
 
 @Table
@@ -116,13 +116,13 @@ export class UserSubscriber extends Model {
     @Column
     subscriberId: number;
 
-    @BelongsTo(() => User)
+    @BelongsTo(() => User, 'subscriberId')
     subscriber: User;
 
     @ForeignKey(() => User)
     @Column
     subscriptionId: number;
 
-    @BelongsTo(() => User)
+    @BelongsTo(() => User, 'subscriptionId')
     subscription: User;
 }
