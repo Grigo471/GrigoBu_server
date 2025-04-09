@@ -6,6 +6,7 @@
 
 # secrets
 /secrets
+*.env
 
 # Logs
 logs
