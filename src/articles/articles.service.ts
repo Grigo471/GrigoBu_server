@@ -175,7 +175,9 @@ export class ArticlesService {
             article.title = dto.title;
             await article.save();
 
-            if (article.userId !== userId && article.user.role === 'user') {
+            const user = await this.userModel.findByPk(userId);
+
+            if (article.userId !== userId && user.role === 'user') {
                 throw new HttpException(
                     'Not a creator or moderator',
                     HttpStatus.UNAUTHORIZED,
