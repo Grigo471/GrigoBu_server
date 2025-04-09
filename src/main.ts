@@ -38,7 +38,10 @@ async function start() {
 
     app.use(cookieParser());
 
-    app.useBodyParser('text', { limit: '10mb' });
+    app.useBodyParser('text', { limit: '20mb' });
+    app.useBodyParser('json', { limit: '20mb' });
+    app.useBodyParser('urlencoded', { limit: '20mb' });
+    app.useBodyParser('raw', { limit: '20mb' });
 
     const config = new DocumentBuilder()
         .setTitle('API для учебного проекта Griboo')
