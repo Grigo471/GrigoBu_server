@@ -25,7 +25,6 @@ async function start() {
 
     const app = await NestFactory.create<NestExpressApplication>(AppModule, {
         httpsOptions,
-        rawBody: true,
     });
 
     app.enableCors({
