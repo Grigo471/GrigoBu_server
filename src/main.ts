@@ -4,6 +4,7 @@ import * as cookieParser from 'cookie-parser';
 import * as fs from 'fs';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import * as path from 'path';
+import { NestExpressApplication } from '@nestjs/platform-express';
 
 declare const module: any;
 
@@ -22,7 +23,9 @@ async function start() {
               ),
           };
 
-    const app = await NestFactory.create(AppModule, { httpsOptions });
+    const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+        httpsOptions,
+    });
 
     app.enableCors({
         origin: isDev
@@ -33,6 +36,8 @@ async function start() {
     });
 
     app.use(cookieParser());
+
+    app.useBodyParser('json', { limit: '10mb' });
 
     const config = new DocumentBuilder()
         .setTitle('API для учебного проекта Griboo')
