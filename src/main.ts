@@ -25,6 +25,7 @@ async function start() {
 
     const app = await NestFactory.create<NestExpressApplication>(AppModule, {
         httpsOptions,
+        rawBody: true,
     });
 
     app.enableCors({
@@ -37,7 +38,7 @@ async function start() {
 
     app.use(cookieParser());
 
-    app.useBodyParser('json', { limit: '10mb' });
+    app.useBodyParser('raw', { limit: '10mb' });
 
     const config = new DocumentBuilder()
         .setTitle('API для учебного проекта Griboo')
