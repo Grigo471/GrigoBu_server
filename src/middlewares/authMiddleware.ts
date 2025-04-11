@@ -6,9 +6,11 @@ import {
 } from '@nestjs/common';
 import { NextFunction, Request, Response } from 'express';
 import { TokenService } from 'src/users/services/token.service';
+import { UserRole } from 'src/users/types/types';
 
 export interface AuthRequest extends Request {
     userId?: number;
+    role?: UserRole;
 }
 
 @Injectable()
@@ -38,6 +40,7 @@ export class AuthMiddleware implements NestMiddleware {
         }
 
         req.userId = userData.id;
+        req.role = userData.role;
         next();
     }
 }

@@ -26,6 +26,7 @@ export class OptionalAuthMiddleware implements NestMiddleware {
                     );
                 }
                 req.userId = userData.id;
+                req.role = userData.role;
             }
         }
 

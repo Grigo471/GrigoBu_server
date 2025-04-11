@@ -15,13 +15,24 @@ export class FileService {
             }
             fs.writeFileSync(path.resolve(filePath, fileName), file.buffer);
 
-            return '/' + fileName;
+            return fileName;
         } catch (error) {
             throw new HttpException(
                 error.message,
                 HttpStatus.INTERNAL_SERVER_ERROR,
             );
         }
+    }
+
+    deleteFileByName(fileName: string) {
+        if (fileName.startsWith('/')) fileName = fileName.substring(1);
+        fs.unlink(path.resolve(__dirname, '..', 'static', fileName), (error) => {
+            if (error) throw new HttpException(
+                error.message,
+                HttpStatus.INTERNAL_SERVER_ERROR,
+            );
+            console.log(`${fileName} was deleted`);
+        })
     }
 
     removeFile() {}

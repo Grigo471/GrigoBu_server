@@ -6,10 +6,12 @@ import {
     ACCESS_TOKEN_AGE_STRING,
     REFRESH_TOKEN_AGE_STRING,
 } from '../consts/authConsts';
+import { UserRole } from '../types/types';
 
 export interface TokenPayload {
     id: number;
     username: string;
+    role: UserRole;
 }
 
 export interface GenerateTokenResult {

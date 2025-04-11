@@ -32,6 +32,8 @@ export class UsersService {
             );
         }
 
+        const oldAvatar = user.avatar;
+        this.fileService.deleteFileByName(oldAvatar);
         const avatar = this.fileService.createFile(file);
 
         user.avatar = avatar;

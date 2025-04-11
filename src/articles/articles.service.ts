@@ -43,6 +43,17 @@ export class ArticlesService {
         private notificationsService: NotificationsService,
     ) {}
 
+    private async checkIfCanEdit(article: Article, userId: number) {
+        const user = await this.userModel.findByPk(userId);
+
+        if (article.userId !== userId && user.role === 'user') {
+            throw new HttpException(
+                'Not a creator or moderator',
+                HttpStatus.UNAUTHORIZED,
+            );
+        }
+    }
+
     private async createTags(tags: string[], articleId: string) {
         const createdTags = await Promise.all(
             tags.map((tag) => {
@@ -135,7 +146,25 @@ export class ArticlesService {
         }
     }
 
-    private async deleteBlocksAndTags(articleId: string) {
+    private async deleteImageBlocksAndFiles(articleId: string) {
+        const blocks = await this.articleImageBlockModel.findAll({
+            where: {
+                articleId: articleId,
+            },
+        });
+
+        await Promise.all(
+            blocks.map((block) => {
+                this.fileService.deleteFileByName(block.src);
+                block.destroy();
+            }),
+        );
+    }
+
+    private async deleteBlocksAndTags(
+        articleId: string,
+        withFiles: boolean = false,
+    ) {
         await this.articleTagModel.destroy({
             where: {
                 articleId: articleId,
@@ -154,11 +183,15 @@ export class ArticlesService {
             },
         });
 
-        await this.articleImageBlockModel.destroy({
-            where: {
-                articleId: articleId,
-            },
-        });
+        if (withFiles) {
+            await this.deleteImageBlocksAndFiles(articleId);
+        } else {
+            await this.articleImageBlockModel.destroy({
+                where: {
+                    articleId: articleId,
+                },
+            });
+        }
     }
 
     async editArticle(
@@ -172,17 +205,31 @@ export class ArticlesService {
                 include: [User],
             });
 
+            if (!article)
+                throw new HttpException(
+                    'Article not found',
+                    HttpStatus.UNAUTHORIZED,
+                );
+
+            await this.checkIfCanEdit(article, userId);
+
             article.title = dto.title;
             await article.save();
 
-            const user = await this.userModel.findByPk(userId);
+            const currentImageBlocks =
+                await this.articleImageBlockModel.findAll({
+                    where: { articleId: id },
+                });
 
-            if (article.userId !== userId && user.role === 'user') {
-                throw new HttpException(
-                    'Not a creator or moderator',
-                    HttpStatus.UNAUTHORIZED,
-                );
-            }
+            const dtoSrcs = dto.blocks
+                .filter((block) => block.type === 'image')
+                .map((block) => block.src);
+
+            currentImageBlocks.forEach(({ src }) => {
+                if (!dtoSrcs.includes(src)) {
+                    this.fileService.deleteFileByName(src);
+                }
+            });
 
             dto.blocks.forEach((block) => {
                 if (block.type === 'image' && block.src.startsWith('blob:')) {
@@ -216,14 +263,9 @@ export class ArticlesService {
                 include: [User],
             });
 
-            if (article.userId !== userId && article.user.role === 'user') {
-                throw new HttpException(
-                    'Not a creator or moderator',
-                    HttpStatus.UNAUTHORIZED,
-                );
-            }
+            await this.checkIfCanEdit(article, userId);
 
-            await this.deleteBlocksAndTags(id);
+            await this.deleteBlocksAndTags(id, true);
 
             await article.destroy();
 

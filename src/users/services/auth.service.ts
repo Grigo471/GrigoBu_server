@@ -5,6 +5,7 @@ import * as bcrypt from 'bcrypt';
 import { TokenService } from './token.service';
 import { UserSettings } from '../models/userSettings';
 import { CreateUserDto } from '../dto/CreateUserDto';
+import { UserRole } from '../types/types';
 
 @Injectable()
 export class AuthService {
@@ -37,6 +38,7 @@ export class AuthService {
         const tokens = this.tokenService.generateTokens({
             username: user.username,
             id: user.id,
+            role: 'user',
         });
         await this.tokenService.saveToken(user.id, tokens.refreshToken);
 
@@ -66,6 +68,7 @@ export class AuthService {
         const tokens = this.tokenService.generateTokens({
             id: user.id,
             username,
+            role: user.role as UserRole,
         });
         await this.tokenService.saveToken(user.id, tokens.refreshToken);
 
@@ -108,6 +111,7 @@ export class AuthService {
         const tokens = this.tokenService.generateTokens({
             id: user.id,
             username: user.username,
+            role: user.role as UserRole,
         });
         await this.tokenService.saveToken(user.id, tokens.refreshToken);
 
