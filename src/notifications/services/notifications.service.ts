@@ -13,14 +13,19 @@ export class NotificationsService {
     async viewNotifications(userId: number) {
         const notifications = await this.notificationModel.findAll({
             where: { userId },
+            order: [['createdAt', 'desc']],
         });
 
-        await notifications.forEach(async (notification) => {
-            if (notification.isSeen === false) {
-                notification.isSeen = true;
-                await notification.save();
-            }
-        });
+        console.log('view');
+
+        Promise.all(
+            notifications.map(async (notification) => {
+                if (notification.isSeen === false) {
+                    notification.isSeen = true;
+                    await notification.save();
+                }
+            }),
+        );
 
         return notifications;
     }
@@ -28,6 +33,7 @@ export class NotificationsService {
     async getNotifications(userId: number) {
         const notifications = await this.notificationModel.findAll({
             where: { userId },
+            order: [['createdAt', 'desc']],
         });
 
         return notifications;

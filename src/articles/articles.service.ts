@@ -155,7 +155,8 @@ export class ArticlesService {
 
         await Promise.all(
             blocks.map((block) => {
-                this.fileService.deleteFileByName(block.src);
+                if (!block.src.startsWith('blob:'))
+                    this.fileService.deleteFileByName(block.src);
                 block.destroy();
             }),
         );
@@ -208,7 +209,7 @@ export class ArticlesService {
             if (!article)
                 throw new HttpException(
                     'Article not found',
-                    HttpStatus.UNAUTHORIZED,
+                    HttpStatus.BAD_REQUEST,
                 );
 
             await this.checkIfCanEdit(article, userId);
@@ -226,7 +227,7 @@ export class ArticlesService {
                 .map((block) => block.src);
 
             currentImageBlocks.forEach(({ src }) => {
-                if (!dtoSrcs.includes(src)) {
+                if (!dtoSrcs.includes(src) && !src.startsWith('blob:')) {
                     this.fileService.deleteFileByName(src);
                 }
             });
@@ -527,8 +528,10 @@ export class ArticlesService {
     }
 
     async getArticleTags(): Promise<string[]> {
-        const tags = await this.tagModel.findAll<Tag>();
-        return tags.map((t) => t.tag).sort();
+        const tags = await this.tagModel.findAll<Tag>({
+            order: [['tag', 'asc']],
+        });
+        return tags.map((t) => t.tag);
     }
 
     async rateArticle(

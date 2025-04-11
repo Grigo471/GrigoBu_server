@@ -17,6 +17,31 @@ import {
 } from './articleBlocks.model';
 import { ArticleRate } from './articleRate.model';
 
+// @Table
+// export class ArticleDraft extends Model {
+//     @Column
+//     title: string;
+
+//     @BelongsToMany(() => Tag, () => ArticleTag)
+//     tags: Tag[];
+
+//     @HasMany(() => ArticleTextBlock)
+//     textBlocks: ArticleTextBlock[];
+
+//     @HasMany(() => ArticleImageBlock)
+//     imageBlocks: ArticleImageBlock[];
+
+//     @HasMany(() => ArticleCodeBlock)
+//     codeBlocks: ArticleCodeBlock[];
+
+//     @ForeignKey(() => User)
+//     @Column
+//     userId: number;
+
+//     @BelongsTo(() => User)
+//     user: User;
+// }
+
 @Table
 export class Article extends Model {
     @Column
